@@ -216472,6 +216472,7 @@ class NotionFileHandler extends FileHandler.default {
     for (const url of urls) {
       this.urlList[file][url] = url;
     }
+    console.log(`file: ${file}, urls: ${urls}`); 
   }
 }
 
@@ -216595,6 +216596,7 @@ async function sync() {
 }
 
 async function migrateImages(file) {
+  console.log(`handling file: ${file}`)
   let res = await Migrater(picgo, [file]);
   if (res.success != res.total)
     throw new Error(
