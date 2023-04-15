@@ -216588,10 +216588,12 @@ async function sync() {
     console.log(`Handling page: ${page.id} [${i + 1}/${pages.length}]`);
     console.log(`Page properties:`, page.properties);
     console.log(`[${i + 1}]: ${page.properties.title.title[0].plain_text}`);
+    var pageNeedUpdate = false;
     // check if the page is unpublished, change it to published
     if (page.properties[config.status.name].select.name == config.status.unpublish) {
       console.log(`Page status is ${config.status.name}: ${config.status.unpublish}, change to published.`);
       page.properties[config.status.name].select = { name: config.status.published };
+      pageNeedUpdate = true;
     }
     // get the filename and filepath of the markwon file
     let properties = getPropertiesDict(page);
@@ -216624,6 +216626,7 @@ async function sync() {
           page.properties.abbrlink.rich_text[0] = text;
         }
         console.log(`Page abbrlink updated: ${abbrlink}`);
+        pageNeedUpdate = true;
       }
     } else {
       console.log(`File not exists: ${filePath}, it's a new page.`);
@@ -216634,8 +216637,8 @@ async function sync() {
     await page2Markdown(page, filePath, properties);
     if (config.migrate_image) await migrateImages(filePath);
     // update the page status to published
-    await updatePageProperties(page);
-    console.log(`Page updated: ${page.id}`);
+    if (pageNeedUpdate) await updatePageProperties(page);
+    console.log(`Page deployed: ${page.id}, ${page.title}`);
   }
   if (pages.length == 0)
     console.log(`no pages ${config.status.name}: ${config.status.unpublish}`);
