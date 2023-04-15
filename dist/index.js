@@ -216521,7 +216521,7 @@ module.exports = migrate;
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const { Client } = __nccwpck_require__(82371);
-const { writeFileSync, existsSync, mkdirSync, readFileSync } = __nccwpck_require__(57147);
+const { writeFileSync, existsSync, mkdirSync, readFileSync, readdirSync } = __nccwpck_require__(57147);
 const { NotionToMarkdown } = __nccwpck_require__(74077);
 const { parse } = __nccwpck_require__(74380);
 const { getBlockChildren } = __nccwpck_require__(53659);
@@ -216591,22 +216591,15 @@ async function sync() {
     return properties;
   });
   // query the filename list from the output directory
-  fs.readdir(config.output, (err, files) => {
-    if (err) {
-      console.log(err);
-      return;
-    }
-    // remove the file not exists in the pages
-    files.forEach((file) => {
-      if (file.endsWith(".md")) {
-        // check if the file exists in the pages
-        if (!notion_page_prop_list.some((page) => page.filename == file)) {
-          // remove the file
-          fs.unlinkSync(join(config.output, file));
-          console.log(`File ${file} removed.`);
-        }
+  readdirSync(config.output).forEach((file) => {
+    if (file.endsWith(".md")) {
+      // check if the file exists in the pages
+      if (!notion_page_prop_list.some((page) => page.filename == file)) {
+        // remove the file
+        fs.unlinkSync(join(config.output, file));
+        console.log(`File ${file} removed.`);
       }
-    });
+    }
   });
   for (let i = 0; i < pages.length; i++) {
     const page = pages[i];
