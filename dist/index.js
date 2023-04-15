@@ -216862,6 +216862,7 @@ function icon2md(icon) {
 
 function getPropVal(data) {
   let val = data[data.type];
+  if (!val) return '';
   switch (data.type) {
     case "multi_select":
       return val.map((a) => a.name);
