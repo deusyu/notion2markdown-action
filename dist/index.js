@@ -216536,23 +216536,16 @@ let config = {
   notion_secret: "",
   database_id: "",
   migrate_image: true,
-  tcyun: {
-    secretId: "",
-    secretKey: "",
-    bucket: "",
-    appId: "",
-    area: "",
-    path: "",
-    customUrl: "",
-    version: "v5"
-  },
+  picBed: { uploader: "tcyun", current: "tcyun", tcyun: {}, aliyun: {} },
   status: {
     name: "",
     unpublish: "",
     published: "",
   },
-  page_output_dir: "",
-  post_output_dir: "",
+  output_dir: {
+    page: "",
+    post: "",
+  },
 };
 
 let notion = new Client({ auth: config.notion_secret });
@@ -216564,7 +216557,7 @@ function init(conf) {
   notion = new Client({ auth: config.notion_secret });
 
   picgo.setConfig({
-    picBed: { uploader: "tcyun", current: "tcyun", tcyun: config.tcyun },
+    picBed: config.picBed,
   });
 
   // 文件重命名为 md5
@@ -216592,7 +216585,7 @@ async function sync() {
     return properties;
   });
   // query the filename list from the output directory
-  readdirSync(config.post_output_dir).forEach((file) => {
+  readdirSync(config.output_dir.post).forEach((file) => {
     if (file.endsWith(".md")) {
       // check if the file exists in the pages
       if (!notion_page_prop_list.some((page) => page.filename == file)) {
@@ -216624,11 +216617,11 @@ async function sync() {
     console.log(`Page properties dict:`, properties);
     // add support for the both page and post
     var filename = properties.filename ? properties.filename + ".md" : page.title + ".md";
-    var output_dir = config.post_output_dir;
+    var output_dir = config.output_dir.post;
     if (properties.type == "page") {
       // page
       filename = 'index.md';
-      output_dir = join(config.page_output_dir, properties.filename);
+      output_dir = join(config.output_dir.page, properties.filename);
     }
     // const filename = properties.filename ? properties.filename + '.md' : page.title + '.md';
     // get the filepath, and old properties of the page from the markdown file
@@ -230838,24 +230831,16 @@ let config = {
   notion_secret: core.getInput("notion_secret"),
   database_id: core.getInput("database_id"),
   migrate_image: core.getInput("migrate_image") === "true",
-  tcyun: {
-    secretId: core.getInput("secretId"),
-    secretKey: core.getInput("secretKey"),
-    bucket: core.getInput("bucket"),
-    appId: core.getInput("appId"),
-    area: core.getInput("area"),
-    path: core.getInput("path"),
-    customUrl: core.getInput("customUrl"),
-    version: core.getInput("version"),
-    options: "",
-  },
+  picBed: JSON.parse(core.getInput("picBedConfig")),
   status: {
     name: core.getInput("status_name"),
     unpublish: core.getInput("status_unpublish"),
     published: core.getInput("status_published"),
   },
-  page_output_dir: core.getInput("page_output_dir"),
-  post_output_dir: core.getInput("post_output_dir"),
+  output_dir: {
+    page: core.getInput("page_output_dir"),
+    post: core.getInput("post_output_dir"),
+  },
 };
 
 (async function () {
