@@ -216545,6 +216545,7 @@ let config = {
   output_dir: {
     page: "",
     post: "",
+    only_remain_published: true,
   },
 };
 
@@ -216587,13 +216588,14 @@ async function sync() {
   // query the filename list from the output directory
   if (!existsSync(config.output_dir.post)) {
     mkdirSync(config.output_dir.post, { recursive: true });
-  } else {
+  } else if (config.output_dir.only_remain_published) {
+    // remove the file not published
     readdirSync(config.output_dir.post).forEach((file) => {
       if (file.endsWith(".md")) {
-        // check if the file exists in the pages
-        if (!notion_page_prop_list.some((page) => page.filename == file)) {
+        // find the file need to be removed: not exists in the pages, or the status is not published
+        if (!notion_page_prop_list.some((page) => page.filename == file && page[config.status.name] == config.status.published)) {
           // remove the file
-          fs.unlinkSync(join(config.output, file));
+          fs.unlinkSync(join(config.output_dir.post, file));
           console.log(`File ${file} removed.`);
         }
       }
@@ -230869,6 +230871,7 @@ let config = {
   output_dir: {
     page: core.getInput("page_output_dir"),
     post: core.getInput("post_output_dir"),
+    only_remain_published: core.getInput("clean_unpublished_post") === "true",
   },
 };
 
