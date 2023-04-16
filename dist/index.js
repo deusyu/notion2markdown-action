@@ -216521,7 +216521,7 @@ module.exports = migrate;
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const { Client } = __nccwpck_require__(82371);
-const { writeFileSync, existsSync, mkdirSync, readFileSync, readdirSync } = __nccwpck_require__(57147);
+const { writeFileSync, existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync } = __nccwpck_require__(57147);
 const { NotionToMarkdown } = __nccwpck_require__(74077);
 const { parse } = __nccwpck_require__(74380);
 const { getBlockChildren } = __nccwpck_require__(53659);
@@ -216595,7 +216595,7 @@ async function sync() {
         // find the file need to be removed: not exists in the pages, or the status is not published
         if (!notion_page_prop_list.some((page) => page.filename == file && page[config.status.name] == config.status.published)) {
           // remove the file
-          fs.unlinkSync(join(config.output_dir.post, file));
+          unlinkSync(join(config.output_dir.post, file));
           console.log(`File ${file} removed.`);
         }
       }
