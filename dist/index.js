@@ -237337,6 +237337,7 @@ let config = {
     post: core.getInput("post_output_dir"),
     clean_unpublished_post: core.getInput("clean_unpublished_post") === "true",
   },
+  timezone: core.getInput("timezone") || "Asia/Shanghai",
 };
 
 (async function () {
