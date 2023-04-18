@@ -236264,6 +236264,7 @@ class NotionMigrater extends Migrater.default {
     if (!this.urlArray || this.urlArray.length === 0) {
       return result;
     }
+    // filter the url using include and exclude
     const toUploadURLs = this.urlArray.filter(url => ((!include || includesReg.test(url)) && (!exclude || !excludesReg.test(url)))).map(async (url) => {
       return await new Promise(async (resolve, reject) => {
         result.total += 1;
@@ -236447,7 +236448,7 @@ module.exports = migrate;
  * @Author: Dorad, ddxi@qq.com
  * @Date: 2023-04-12 18:38:51 +02:00
  * @LastEditors: Dorad, ddxi@qq.com
- * @LastEditTime: 2023-04-18 20:03:16 +02:00
+ * @LastEditTime: 2023-04-18 21:11:23 +02:00
  * @FilePath: \src\notion.js
  * @Description: 
  * 
@@ -236495,15 +236496,18 @@ function init(conf) {
   config = conf;
   notion = new Client({ auth: config.notion_secret });
 
+  const domain = new URL(config.pic_base_url).hostname;
+
   picgo.setConfig({
     "picBed": config.picBed,
     "picgo-plugin-pic-migrater": {
-      exclude: config.pic_base_url ? [config.pic_base_url] : null,
+      exclude: `^(?=.*${domain.replace('.', '\.')}).*|.*\.ico$`, // exclude the domain and icon
     },
     "pic-base-url": config.pic_base_url || null
   });
 
   // passing notion client to the option
+  var CAPTION_DIV_TEMPLATE = `<div style="text-align: center; margin: 5px 0 10px;"><p>{{caption}}</p></div>`
   n2m = new NotionToMarkdown({ notionClient: notion });
   n2m.setCustomTransformer("callout", callout(n2m));
   n2m.setCustomTransformer("bookmark", async (block) => {
@@ -236527,7 +236531,7 @@ function init(conf) {
       }
     }).then((p) => {
       var body_div = `<div style="display: flex;"><a href="${p.url}"target="_blank"rel="noopener noreferrer" style="display: flex; color: inherit; text-decoration: none; user-select: none; transition: background 20ms ease-in 0s; cursor: pointer; flex-grow: 1; min-width: 0px; flex-wrap: wrap-reverse; align-items: stretch; text-align: left; overflow: hidden; border: 1px solid rgba(55, 53, 47, 0.16); border-radius: 3px; position: relative; fill: inherit;"><div style="flex: 4 1 180px; padding: 12px 14px 14px; overflow: hidden; text-align: left;"><div style="font-size: 14px; line-height: 20px; color: rgb(55, 53, 47); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 24px; margin-bottom: 2px;">${p.title}</div><div style="font-size: 12px; line-height: 16px; color: rgba(55, 53, 47, 0.65); height: 32px; overflow: hidden;">${p.description}</div><div style="display: flex; margin-top: 6px;"><img src="${p.favicon}"style="width: 16px; height: 16px; min-width: 16px; margin-right: 6px;"><div style="font-size: 12px; line-height: 16px; color: rgb(55, 53, 47); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.url}</div></div></div><div style="flex: 1 1 180px; display: block; position: relative;"><div style="position: absolute; inset: 0px;"><div style="width: 100%; height: 100%;"><img src="${p.cover}"referrerpolicy="same-origin"style="display: block; object-fit: cover; border-radius: 1px; width: 100%; height: 100%;"></div></div></div></a></div>`
-      var caption_div = `<div style="text-align: center; margin: 5px 0 10px; color:#858585;">${caption}</div>`
+      var caption_div = caption ? CAPTION_DIV_TEMPLATE.replace("{{caption}}", caption) : "";
       return caption ? `<div style="width: 100%; margin-top: 4px; margin-bottom: 4px;">${body_div}${caption_div}</div>` : `<div style="width: 100%; margin-top: 4px; margin-bottom: 4px;">${body_div}</div>`
     })
       .catch((err) => {
@@ -236576,7 +236580,7 @@ function init(conf) {
       return false;
     }
     const video_div = `<iframe src="${video_url}" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" style="width: 100%; aspect-ratio: 16/9;"> </iframe>`;
-    var caption_div = caption ? `<div style="text-align: center; margin: -20px 0 10px; color:#858585; ">${caption}</div>` : "";
+    var caption_div = caption ? CAPTION_DIV_TEMPLATE.replace("{{caption}}", caption) : "";
     return `<div style="width: 100%; margin-top: 4px; margin-bottom: 4px;">${video_div}${caption_div}</div>`
   });
   n2m.setCustomTransformer("embed", async (block) => {
@@ -236588,12 +236592,15 @@ function init(conf) {
     }
     const caption = embed.caption && embed.caption.length ? embed.caption[0].plain_text : "";
     const url = embed.url;
+    var iframe = false;
     try {
       switch (new URL(url).hostname) {
         case "twitter.com":
-          return `<blockquote class="twitter-tweet"><a href="${url}"></a></blockquote><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>`;
+          iframe = `<blockquote class="twitter-tweet"><a href="${url}"></a></blockquote><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>`;
+          break;
         case "www.google.com":
-          return `<div class="gmap_canvas"><iframe width="600" height="500" id="gmap_canvas" src="${url}" frameborder="0" scrolling="no" marginheight="0" marginwidth="0"></iframe><a href="https://www.embedgooglemap.net/blog/nordvpn-coupon-code/"></a></div>`;
+          iframe = `<iframe width="600" height="500" id="gmap_canvas" src="${url}" frameborder="0" scrolling="no" marginheight="0" marginwidth="0"></iframe>`;
+          break;
         default:
           console.error("Embed block with unsupported domain: ", block);
           return false;
@@ -236602,6 +236609,12 @@ function init(conf) {
       console.error("Error parsing embed block: ", block);
       return false;
     }
+    if (!iframe) {
+      console.error("Embed block without iframe: ", block);
+      return false;
+    }
+    var caption_div = caption ? CAPTION_DIV_TEMPLATE.replace("{{caption}}", caption) : "";
+    return `<div style="width: 100%; margin-top: 4px; margin-bottom: 4px;">${iframe}${caption_div}</div>`
   });
   n2m.setCustomTransformer("link_preview", async (block) => {
     const { link_preview } = block;
@@ -236632,16 +236645,25 @@ function init(conf) {
     if (!pdf) {
       return false;
     }
+    var caption = pdf.caption && pdf.caption.length > 0 ? pdf.caption[0].plain_text : "";
+    var iframe = false;
     switch (pdf.type) {
       case "file":
-        console.warn("PDF files are stored on Notion servers and may expire after a period of time.");
-        return `<iframe src="${pdf.file.url}" style="width: 100%; aspect-ratio: 16/9;"></iframe>`;
+        console.warn("PDF files are stored on Notion servers and may expire after a period of time, URL:", pdf.file.url);
+        iframe = `<iframe src="${pdf.file.url}" style="width: 100%; aspect-ratio: 16/9;"></iframe>`;
+        break;
       case "external":
-        return `<iframe src="${pdf.external.url}" style="width: 100%; aspect-ratio: 16/9;"></iframe>`;
+        iframe = `<iframe src="${pdf.external.url}" style="width: 100%; aspect-ratio: 16/9;"></iframe>`;
+        break;
       default:
         console.error("PDF block with unsupported type: ", block);
         return false;
     }
+    if (!iframe) {
+      return false;
+    }
+    const caption_div = caption ? CAPTION_DIV_TEMPLATE.replace("{{caption}}", caption) : "";
+    return `<div class="pdf">${iframe}${caption_div}</div>`;
   });
 }
 
