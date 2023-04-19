@@ -124420,11 +124420,16 @@ class NotionToMarkdown {
             }
             // process child blocks
             if (mdBlocks.children && mdBlocks.children.length > 0) {
-                if (mdBlocks.type === "synced_block") {
-                    mdString += this.toMarkdownString(mdBlocks.children, nestingLevel);
+                if (mdBlocks.type === "synced_block" ||
+                    mdBlocks.type === "child_page") {
+                    let mdstr = this.toMarkdownString(mdBlocks.children);
+                    // console.log(mdstr);
+                    mdString += mdstr;
                 }
                 else {
-                    mdString += this.toMarkdownString(mdBlocks.children, nestingLevel + 1);
+                    let mdstr = this.toMarkdownString(mdBlocks.children, nestingLevel + 1);
+                    mdString += mdstr;
+                    // console.log(mdstr);
                 }
             }
         });
@@ -124442,6 +124447,7 @@ class NotionToMarkdown {
         }
         const blocks = await (0, notion_1.getBlockChildren)(this.notionClient, id, totalPage);
         const parsedData = await this.blocksToMarkdown(blocks);
+        // console.log(JSON.stringify(parsedData, null, 4));
         return parsedData;
     }
     /**
@@ -124464,20 +124470,29 @@ class NotionToMarkdown {
                 block.type !== "column_list" &&
                 block.type !== "toggle" &&
                 block.type !== "callout") {
+                // Get children of this block.
                 let child_blocks = await (0, notion_1.getBlockChildren)(this.notionClient, block.id, totalPage);
+                // Push this block to mdBlocks.
                 mdBlocks.push({
                     type: block.type,
+                    blockId: block.id,
                     parent: await this.blockToMarkdown(block),
                     children: [],
                 });
+                // Recursively call blocksToMarkdown to get children of this block.
                 let l = mdBlocks.length;
                 await this.blocksToMarkdown(child_blocks, totalPage, mdBlocks[l - 1].children);
                 continue;
             }
             let tmp = await this.blockToMarkdown(block);
             // console.log(block);
-            // @ts-ignore
-            mdBlocks.push({ type: block.type, parent: tmp, children: [] });
+            mdBlocks.push({
+                // @ts-ignore
+                type: block.type,
+                blockId: block.id,
+                parent: tmp,
+                children: []
+            });
         }
         return mdBlocks;
     }
@@ -124492,8 +124507,11 @@ class NotionToMarkdown {
             return "";
         let parsedData = "";
         const { type } = block;
-        if (type in this.customTransformers && !!this.customTransformers[type])
-            return await this.customTransformers[type](block);
+        if (type in this.customTransformers && !!this.customTransformers[type]) {
+            const customTransformerValue = await this.customTransformers[type](block);
+            if (!!customTransformerValue || customTransformerValue === "")
+                return customTransformerValue;
+        }
         switch (type) {
             case "image":
                 {
@@ -124511,8 +124529,8 @@ class NotionToMarkdown {
             case "divider": {
                 return md.divider();
             }
-            case "equation": {
-                return md.codeBlock(block.equation.expression);
+            case 'equation': {
+                return md.equation(block.equation.expression);
             }
             case "video":
             case "file":
@@ -124592,6 +124610,7 @@ class NotionToMarkdown {
                 }
                 return md.table(tableArr);
             }
+            // NOTE: column_list is parent of columns
             case "column_list": {
                 const { id, has_children } = block;
                 if (!has_children)
@@ -124606,9 +124625,9 @@ class NotionToMarkdown {
                 if (!has_children)
                     return "";
                 const column_children = await (0, notion_1.getBlockChildren)(this.notionClient, id, 100);
-                const column_children_promise = column_children.map(async (column_child) => await this.blockToMarkdown(column_child));
-                let column = await Promise.all(column_children_promise);
-                return column.join("\n\n");
+                let column_children_mdBlocks = await this.blocksToMarkdown(column_children);
+                let column_string = this.toMarkdownString(column_children_mdBlocks);
+                return column_string;
             }
             case "toggle": {
                 const { id, has_children } = block;
@@ -124651,6 +124670,10 @@ class NotionToMarkdown {
                 // @ts-ignore
                 let blockContent = block[type].text || block[type].rich_text || [];
                 blockContent.map((content) => {
+                    if (content.type === 'equation') {
+                        parsedData += md.inlineEquation(content.equation.expression);
+                        return;
+                    }
                     const annotations = content.annotations;
                     let plain_text = content.plain_text;
                     plain_text = this.annotatePlainText(plain_text, annotations);
@@ -124765,12 +124788,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.table = exports.toggle = exports.divider = exports.addTabSpace = exports.image = exports.todo = exports.bullet = exports.callout = exports.quote = exports.heading3 = exports.heading2 = exports.heading1 = exports.codeBlock = exports.link = exports.underline = exports.strikethrough = exports.italic = exports.bold = exports.inlineCode = void 0;
+exports.table = exports.toggle = exports.divider = exports.addTabSpace = exports.image = exports.todo = exports.bullet = exports.callout = exports.quote = exports.heading3 = exports.heading2 = exports.heading1 = exports.equation = exports.codeBlock = exports.link = exports.underline = exports.strikethrough = exports.italic = exports.bold = exports.inlineEquation = exports.inlineCode = void 0;
 const markdown_table_1 = __importDefault(__nccwpck_require__(45300));
 const inlineCode = (text) => {
     return `\`${text}\``;
 };
 exports.inlineCode = inlineCode;
+const inlineEquation = (text) => {
+    return `$${text}$`;
+};
+exports.inlineEquation = inlineEquation;
 const bold = (text) => {
     return `**${text}**`;
 };
@@ -124799,6 +124826,12 @@ ${text}
 \`\`\``;
 };
 exports.codeBlock = codeBlock;
+const equation = (text) => {
+    return `$$
+${text}
+$$`;
+};
+exports.equation = equation;
 const heading1 = (text) => {
     return `# ${text}`;
 };
@@ -128170,12 +128203,18 @@ class Migrater {
                 result.total += 1;
                 try {
                     let imgInfo;
-                    const picPath = this.getLocalPath(url);
-                    if (!picPath) {
+                    const isUrlPath = (0, utils_1.isUrl)(url);
+                    if (isUrlPath) {
                         imgInfo = await this.handlePicFromURL(url);
                     }
                     else {
-                        imgInfo = await this.handlePicFromLocal(picPath, url);
+                        const picPath = this.getLocalPath(url);
+                        if (picPath) {
+                            imgInfo = await this.handlePicFromLocal(picPath, url);
+                        }
+                        else {
+                            imgInfo = undefined;
+                        }
                     }
                     resolve(imgInfo);
                 }
@@ -128220,21 +128259,37 @@ class Migrater {
         return result;
     }
     getLocalPath(imgPath) {
-        if (!path_1.default.isAbsolute(imgPath)) {
-            imgPath = path_1.default.join(this.baseDir, imgPath);
+        let localPath = imgPath;
+        if (!path_1.default.isAbsolute(localPath)) {
+            localPath = path_1.default.join(this.baseDir, localPath);
         }
-        if (fs_1.default.existsSync(imgPath)) {
-            return imgPath;
+        if (fs_1.default.existsSync(localPath)) {
+            console.log('1', localPath);
+            return localPath;
         }
         else {
+            // if path is url encode, try decode
+            if ((0, utils_1.isUrlEncode)(imgPath)) {
+                localPath = decodeURI(imgPath);
+                if (!path_1.default.isAbsolute(localPath)) {
+                    localPath = path_1.default.join(this.baseDir, localPath);
+                }
+                if (fs_1.default.existsSync(localPath)) {
+                    console.log('2', localPath);
+                    return localPath;
+                }
+            }
+            console.log(localPath, false);
             return false;
         }
     }
     async getPicFromURL(url) {
-        return this.ctx.Request.request({
+        const res = await this.ctx.request({
             url,
-            encoding: null
+            encoding: null,
+            responseType: 'arraybuffer'
         });
+        return res;
     }
     async handlePicFromLocal(picPath, origin) {
         if (fs_1.default.existsSync(picPath)) {
@@ -128259,7 +128314,7 @@ class Migrater {
             const buffer = await this.getPicFromURL(url);
             const fileName = path_1.default.basename(url).split('?')[0].split('#')[0];
             const imgSize = (0, utils_1.getImageSize)(buffer);
-            // console.log(imgSize);
+            console.log(imgSize);
             return {
                 buffer,
                 fileName,
@@ -128270,6 +128325,7 @@ class Migrater {
             };
         }
         catch (e) {
+            this.ctx.log.error(`handle pic from url ${url} fail: ${JSON.stringify(e)}`);
             return undefined;
         }
     }
@@ -128288,7 +128344,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getImageSize = void 0;
+exports.handleUrlEncode = exports.isUrlEncode = exports.isUrl = exports.getImageSize = void 0;
 const image_size_1 = __importDefault(__nccwpck_require__(64312));
 const getImageSize = (buffer) => {
     try {
@@ -128311,6 +128367,27 @@ const getImageSize = (buffer) => {
     }
 };
 exports.getImageSize = getImageSize;
+const isUrl = (url) => (url.startsWith('http://') || url.startsWith('https://'));
+exports.isUrl = isUrl;
+const isUrlEncode = (url) => {
+    url = url || '';
+    try {
+        // the whole url encode or decode shold not use encodeURIComponent or decodeURIComponent
+        return url !== decodeURI(url);
+    }
+    catch (e) {
+        // if some error caught, try to let it go
+        return true;
+    }
+};
+exports.isUrlEncode = isUrlEncode;
+const handleUrlEncode = (url) => {
+    if (!(0, exports.isUrlEncode)(url)) {
+        url = encodeURI(url);
+    }
+    return url;
+};
+exports.handleUrlEncode = handleUrlEncode;
 
 
 /***/ }),
@@ -236215,7 +236292,7 @@ function defaultCallback(err) {
  * @Author: Dorad, ddxi@qq.com
  * @Date: 2023-04-18 22:07:58 +02:00
  * @LastEditors: Dorad, ddxi@qq.com
- * @LastEditTime: 2023-04-19 01:31:25 +02:00
+ * @LastEditTime: 2023-04-19 02:46:19 +02:00
  * @FilePath: \src\customTransformer.js
  * @Description: 
  * 
@@ -236446,7 +236523,10 @@ async function embed(block) {
     try {
         switch (new URL(url).hostname) {
             case "twitter.com":
-                iframe = `<blockquote class="twitter-tweet"><a href="${url}"></a></blockquote><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>`;
+                // get twitter username and status id from status url like: https://twitter.com/engineers_feed/status/1648224909628428288
+                // query twitter embed code from twitter
+                const data = await axios.get(`https://publish.twitter.com/oembed?url=${url}`).then((resp) => resp.data);
+                iframe = data.html;
                 break;
             case "www.google.com":
                 iframe = `<iframe id="gmap_canvas" src="${url}" frameborder="0" scrolling="no" style="width: 100%; margin:0; aspect-ratio: 16/9;"></iframe>`;
@@ -236456,11 +236536,11 @@ async function embed(block) {
                 return false;
         }
     } catch (err) {
-        console.error("Error parsing embed block: ", block);
+        console.error("Error parsing embed block: ", block, err);
         return false;
     }
     if (!iframe) {
-        console.error("Embed block without iframe: ", block);
+        console.error("Embed block without iframe: ", block, err);
         return false;
     }
     var caption_div = caption ? CAPTION_DIV_TEMPLATE.replace("{{caption}}", caption) : "";
