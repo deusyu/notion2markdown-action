@@ -236292,7 +236292,7 @@ function defaultCallback(err) {
  * @Author: Dorad, ddxi@qq.com
  * @Date: 2023-04-18 22:07:58 +02:00
  * @LastEditors: Dorad, ddxi@qq.com
- * @LastEditTime: 2023-04-19 03:59:12 +02:00
+ * @LastEditTime: 2023-04-19 04:04:34 +02:00
  * @FilePath: \src\customTransformer.js
  * @Description: 
  * 
@@ -236460,10 +236460,6 @@ async function bookmark(block) {
         const description = metas['og:description'] || metas['twitter:description'] || metas['description'] || "";
         const cover = metas['og:image'] || metas['twitter:image'] || metas['image'] || "";
         var favicon = $('link[rel="shortcut icon"]').attr('href') || $('link[rel="icon"]').attr('href') || "";
-        // const title = $('meta[property="og:title"]').attr('content') || $('meta[name="twitter:title"]').attr('content') || $('title').text();
-        // const description = $('meta[property="og:description"]').attr('content') || $('meta[name="twitter:description"]').attr('content') || $('meta[name="description"]').attr('content') || "";
-        // const cover = $('meta[property="og:image"]').attr('content') || $('meta[name="twitter:image"]').attr('content') || $('meta[name="image"]').attr('content') || "";
-        // var favicon = $('link[rel="shortcut icon"]').attr('href') || $('link[rel="icon"]').attr('href') || "";
         if (favicon.startsWith("//")) favicon = "https:" + favicon;
         if (favicon.startsWith("/")) favicon = "https://" + new URL(bookmark.url).hostname + favicon;
         return {
@@ -236948,7 +236944,7 @@ async function sync() {
     }
     // if the page is exists, update the abbrlink of the page if it is empty and the local file has the abbrlink
     var notionProp = notionPagePropList.find((prop) => prop.id == page.id);
-    if (localProp.abbrlink && notionProp.abbrlink != undefined && !notionProp.abbrlink) {
+    if (localProp.abbrlink && page.properties.hasOwnProperty('abbrlink') && !notionProp.abbrlink) {
       console.log(`Update the abbrlink of the page: ${notionProp.id}, ${notionProp.title}`);
       const abbrlink = localProp.abbrlink;
       const text = {
