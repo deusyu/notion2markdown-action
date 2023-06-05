@@ -152588,7 +152588,7 @@ class NotionToMarkdown {
             case "image":
                 {
                     let blockContent = block.image;
-                    let image_title = "image";
+                    let image_title = "";
                     const image_caption_plain = blockContent.caption
                         .map((item) => item.plain_text)
                         .join("");
@@ -152603,10 +152603,6 @@ class NotionToMarkdown {
                     // image caption with high priority
                     if (image_caption_plain.trim().length > 0) {
                         image_title = image_caption_plain;
-                    }
-                    else if (image_type === "file" || image_type === "external") {
-                        const matches = link.match(/[^\/\\&\?]+\.\w{3,4}(?=([\?&].*$|$))/);
-                        image_title = matches ? matches[0] : image_title;
                     }
                     return await md.image(image_title, link, this.config.convertImagesToBase64);
                 }
