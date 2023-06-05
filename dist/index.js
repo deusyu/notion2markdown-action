@@ -152538,7 +152538,8 @@ class NotionToMarkdown {
         for (let i = 0; i < blocks.length; i++) {
             let block = blocks[i];
             if ("has_children" in block && block.has_children) {
-                const block_id = block.type == "synced_block" && block.synced_block.synced_from.block_id ? block.synced_block.synced_from.block_id : block.id;
+                // Get children of this block.
+                const block_id = block.type == "synced_block" && block.synced_block?.synced_from?.block_id ? block.synced_block.synced_from.block_id : block.id;
                 // Get children of this block.
                 let child_blocks = await (0, notion_1.getBlockChildren)(this.notionClient, block_id, totalPage);
                 // Push this block to mdBlocks.
