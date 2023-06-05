@@ -282556,7 +282556,7 @@ class NotionMigrater extends Migrater.default {
       // check if the file exists on the server
       const imageUrlExistCheckList = await checkPicUrlList(toUploadImgs.map(item => `${base_url}${item.fileName}`));
       // get the existsImgsList with the url
-      existsImgsList = existsImgsList.concat(toUploadImgs.filter((item, index) => {
+      existsImgsList = await existsImgsList.concat(toUploadImgs.filter((item, index) => {
         return imageUrlExistCheckList[index];
       }).map(item => {
         return {
@@ -282565,7 +282565,7 @@ class NotionMigrater extends Migrater.default {
         };
       }));
       // remove the existsImgsList from toUploadImgs
-      toUploadImgs = toUploadImgs.filter((item, index) => {
+      toUploadImgs = await toUploadImgs.filter((item, index) => {
         return !imageUrlExistCheckList[index];
       });
     }
@@ -282590,7 +282590,7 @@ class NotionMigrater extends Migrater.default {
         };
       }));
       // remove the existsImgsList from toUploadImgs
-      toUploadImgs = toUploadImgs.filter((item, index) => {
+      toUploadImgs = await toUploadImgs.filter((item, index) => {
         return !imageUrlExistCheckList[index];
       });
     }
