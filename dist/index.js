@@ -156433,7 +156433,7 @@ class Migrater {
                     return localPath;
                 }
             }
-            console.log(localPath, false);
+            // console.log(localPath, false);
             return false;
         }
     }
@@ -282622,7 +282622,11 @@ class NotionMigrater extends Migrater.default {
 
       // compress the image
       if (this.ctx.getConfig('compress')) {
-        imgInfo = await compressPic(imgInfo);
+        try {
+          imgInfo = await compressPic(imgInfo);
+        } catch (e) {
+          console.warn(`Failed to compress ${imgInfo.fileName}`)
+        }
       }
       // upload the image
       const result = await this.ctx.upload([imgInfo]);
@@ -282694,7 +282698,7 @@ class NotionFileHandler extends FileHandler.default {
     for (const url of urls) {
       this.urlList[file][url] = url;
     }
-    console.log(`file: ${file}, urls: ${urls}`); 
+    console.log(`file: ${file}, urls: ${urls}`);
   }
 }
 
