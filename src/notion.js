@@ -2,7 +2,7 @@
  * @Author: Dorad, ddxi@qq.com
  * @Date: 2023-04-12 18:38:51 +02:00
  * @LastEditors: Dorad, ddxi@qq.com
- * @LastEditTime: 2023-09-03 22:16:24 +08:00
+ * @LastEditTime: 2023-09-03 23:29:39 +08:00
  * @FilePath: \src\notion.js
  * @Description: 
  * 
@@ -90,7 +90,7 @@ function init(conf) {
 
 async function sync() {
   // 获取已发布的文章
-  let pages = await getPages(config.database_id, updated_after = config.last_sync_datetime);
+  let pages = await getPages(config.database_id);
   /**
    * 需要处理的逻辑:
    * 1. 对于已发布的文章，如果本地文件存在，且存在abbrlink，则更新notion中的abbrlink
@@ -98,7 +98,7 @@ async function sync() {
    */
   // get all the output markdown filename list of the pages, and remove the file not exists in the pages under the output directory
   // query the filename list from the output directory
-  const notionPagePropList = await Promise.all(pages.map(async (page) => {
+  let notionPagePropList = await Promise.all(pages.map(async (page) => {
     var properties = await getPropertiesDict(page);
     switch (properties.type) {
       case "page":
@@ -176,9 +176,13 @@ async function sync() {
       await updatePageProperties(page, keysToUpdate);
     }
   }
+  
   /**
-   * 更新未发布的文章
+   * 处理需要更新的文章
    */
+  if(config?.last_sync_datetime && config?.last_sync_datetime !== null && config?.last_sync_datetime !== 0) {
+    notionPagePropList = notionPagePropList.filter((prop) => prop[config.status.name] == config.status.published && prop.last_edited_time > config.last_sync_datetime);
+  }
   // deal with notionPagePropList
   if (notionPagePropList.length == 0) {
     console.log("No page to deal with.");
@@ -267,32 +271,13 @@ async function page2Markdown(page, filePath, properties) {
  * @param {*} updated_after 
  * @returns 
  */
-async function getPages(database_id, updated_after = undefined) {
+async function getPages(database_id) {
   let filter = {}
-  if (!updated_after) {
-    filter = {
-      property: config.status.name,
-      select: {
-        equals: config.status.published,
-      },
-    }
-  } else {
-    filter = {
-      and: [
-        {
-          property: config.status.name,
-          select: {
-            equals: config.status.published,
-          }
-        },
-        {
-          timestamp: 'last_edited_time',
-          last_edited_time: {
-            on_or_after: updated_after
-          }
-        }
-      ]
-    }
+  filter = {
+    property: config.status.name,
+    select: {
+      equals: config.status.published,
+    },
   }
   // console.log('Page filter:', filter);
   let resp = await notion.databases.query({
@@ -379,8 +364,8 @@ async function getPropertiesDict(page) {
   }
   // id, created, updated time
   data['id'] = page.id;
-  // data['created'] = page.created_time;
-  // data['updated'] = page.last_edited_time;
+  data['created_time'] = page.created_time;
+  data['last_edited_time'] = page.last_edited_time;
   return data;
 }
 

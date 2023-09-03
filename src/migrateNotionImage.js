@@ -70,7 +70,7 @@ async function checkPicExist(ctx, picUrl) {
     })
     return res.status === 200;
   } catch (e) {
-    ctx.log.error('check pic exist error: ', e)
+    // ctx.log.error('check pic exist error: ', e)
     return false;
   }
 }
