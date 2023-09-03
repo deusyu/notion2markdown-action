@@ -2,8 +2,8 @@ name: Build a release for new tag
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -50,8 +50,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          ref: main
       - name: Create release
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
