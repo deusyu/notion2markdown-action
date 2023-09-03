@@ -36,9 +36,6 @@ jobs:
         with:
           file_pattern: 'dist/*'
           commit_message: Generate dist files.
-          branch: main
-          create_branch: true
-          push_options: '--force'
   release:
     name: Create Release
     needs: build
@@ -51,7 +48,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Create release
-        uses: "marvinpinto/action-automatic-releases@latest"
+        uses: marvinpinto/action-automatic-releases@latest
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
