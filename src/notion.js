@@ -2,7 +2,7 @@
  * @Author: Dorad, ddxi@qq.com
  * @Date: 2023-04-12 18:38:51 +02:00
  * @LastEditors: Dorad, ddxi@qq.com
- * @LastEditTime: 2023-09-03 15:14:33 +08:00
+ * @LastEditTime: 2023-09-03 22:16:24 +08:00
  * @FilePath: \src\notion.js
  * @Description: 
  * 
@@ -40,6 +40,8 @@ let config = {
   timezone: "Asia/Shanghai",
   pic_base_url: "",
   pic_compress: false,
+  last_sync_datetime: 0,
+  keys_to_keep: [],
 };
 
 let notion = new Client({ auth: config.notion_secret });
@@ -61,7 +63,7 @@ function init(conf) {
     "picBed": config.picBed,
     "picgo-plugin-pic-migrater": {
       // only include notion image
-      include: `^(https://.*?amazonaws\.com\/.+\.(?:jpg|jpeg|png|gif|webp)\?.+)`, 
+      include: `^(https://.*?amazonaws\.com\/.+\.(?:jpg|jpeg|png|gif|webp)\?.+)`,
       exclude: `^(?=.*${domain.replace('.', '\.')}).*|.*\.ico$`, // exclude the domain and icon
     },
     "pic-base-url": config.pic_base_url || null
@@ -83,17 +85,16 @@ function init(conf) {
   n2m.setCustomTransformer("link_preview", t.link_preview);
   n2m.setCustomTransformer("pdf", t.pdf);
   n2m.setCustomTransformer("audio", t.audio);
-  n2m.setCustomTransformer("image",t.image);
+  n2m.setCustomTransformer("image", t.image);
 }
 
 async function sync() {
-  // 获取待发布和已发布的文章
-  let pages = await getPages(config.database_id, ["unpublish", "published"]);
+  // 获取已发布的文章
+  let pages = await getPages(config.database_id, updated_after = config.last_sync_datetime);
   /**
    * 需要处理的逻辑:
    * 1. 对于已发布的文章，如果本地文件存在，且存在abbrlink，则更新notion中的abbrlink
-   * 2. 对于未发布的文章, 如果本地文件存在，则尝试读取本地文件的abbrlink，如果存在，则更新notion中的abbrlink, 并生成markdown文件
-   * 3. 对于本地存在的文章，如果notion中不是已发布状态，则删除本地文件
+   * 2. 对于本地存在的文章，如果notion中不是已发布状态，根据设置删除本地文件
    */
   // get all the output markdown filename list of the pages, and remove the file not exists in the pages under the output directory
   // query the filename list from the output directory
@@ -146,28 +147,34 @@ async function sync() {
     }
     var page = pages.find((page) => page.id == localProp.id);
     // if the page is not exists, delete the local file
-    if (!page && config.output_dir.clean_unpublished_post) {
+    if ((!page || page == undefined) && config.output_dir.clean_unpublished_post) {
       console.log(`Page is not exists, delete the local file: ${file}`);
       unlinkSync(path.join(config.output_dir.post, file));
       deletedPostList.push(file);
       continue;
     }
+    var notionProp = await getPropertiesDict(page);
     // if the page is exists, update the abbrlink of the page if it is empty and the local file has the abbrlink
-    var notionProp = notionPagePropList.find((prop) => prop.id == page.id);
-    if (localProp.abbrlink && page.properties.hasOwnProperty('abbrlink') && !notionProp.abbrlink) {
-      console.log(`Update the abbrlink of the page: ${notionProp.id}, ${notionProp.title}`);
-      const abbrlink = localProp.abbrlink;
-      const text = {
-        "type": "text",
-        "text": {
-          "content": abbrlink,
-          "link": null
-        },
-        "plain_text": abbrlink,
-        "href": null
-      };
-      page.properties.abbrlink.rich_text.push(text);
-    };
+    // handle the keys_to_keep, to update it
+    if (config.keys_to_keep && config.keys_to_keep.length > 0) {
+      let keysToUpdate = [];
+      for (let i = 0; i < config.keys_to_keep.length; i++) {
+        const key = config.keys_to_keep[i];
+        if (localProp[key] && page.properties.hasOwnProperty(key) && !notionProp[key]) {
+          page.properties[key].rich_text.push({
+            "type": "text",
+            "text": {
+              "content": localProp[key],
+              "link": null
+            },
+            "plain_text": localProp[key],
+            "href": null
+          });
+          keysToUpdate.push(key);
+        }
+      }
+      await updatePageProperties(page, keysToUpdate);
+    }
   }
   /**
    * 更新未发布的文章
@@ -185,7 +192,7 @@ async function sync() {
      * 只处理未发布的文章
      */
     // skip the page if it is not exists or published
-    if (!page || prop[config.status.name] == config.status.published) {
+    if (!page || prop[config.status.name] !== config.status.published) {
       console.log(`Page is not exists or published, skip: ${prop.id}, ${prop.title}`);
       return false;
     }
@@ -208,15 +215,6 @@ async function sync() {
     // get the latest properties of the page
     const newPageProp = await getPropertiesDict(page);
     await page2Markdown(page, prop.filePath, newPageProp);
-    // if (config.migrate_image) {
-    //   const res = await migrateImages(prop.filePath);
-    //   if (!res) {
-    //     console.warn(`Migrate images failed: ${prop.id}, ${prop.title}`);
-    //     return false;
-    //   }
-    // }
-    // update the page status to published
-    await updatePageProperties(page);
     console.log(`Page conversion successfully: ${prop.id}, ${prop.title}`);
     return true;
   }));
@@ -233,13 +231,13 @@ async function sync() {
 async function page2Markdown(page, filePath, properties) {
   const mdblocks = await n2m.pageToMarkdown(page.id);
   // 将图床上传和URL替换放到这里，避免后续对于MD文件的二次处理.
-  if(config.migrate_image){
+  if (config.migrate_image) {
     // 筛选出所有type为imge的block，并进行处理
     let imgBlocks = mdblocks.filter((block) => block.type === "image");
     // 对于所有的图片block，进行并行处理
     await Promise.all(imgBlocks.map(async (block) => {
       const mdImageReg = /!\[([^[\]]*)]\(([^)]+)\)/;
-      if(!mdImageReg.test(block.parent)) return;
+      if (!mdImageReg.test(block.parent)) return;
       const match = mdImageReg.exec(block.parent);
       const newPicUrl = await migrateNotionImageFromURL(picgo, match[2]);
       if (newPicUrl) {
@@ -248,7 +246,7 @@ async function page2Markdown(page, filePath, properties) {
       return block;
     }));
     // 处理封面图
-    if(page.cover && page.cover.type === "file"){
+    if (page.cover && page.cover.type === "file") {
       const newPicUrl = await migrateNotionImageFromURL(picgo, page.cover.file.url);
       if (newPicUrl) {
         properties.cover = newPicUrl;
@@ -264,44 +262,48 @@ async function page2Markdown(page, filePath, properties) {
 }
 
 /**
- * query the pages of the database
+ * 
  * @param {*} database_id 
- * @param {*} types 
+ * @param {*} updated_after 
  * @returns 
  */
-async function getPages(database_id, types = ["unpublish", "published"]) {
+async function getPages(database_id, updated_after = undefined) {
   let filter = {}
-  if (types.length > 1) {
+  if (!updated_after) {
     filter = {
-      or: [
-        {
-          property: config.status.name,
-          select: {
-            equals: config.status.unpublish,
-          },
-        },
+      property: config.status.name,
+      select: {
+        equals: config.status.published,
+      },
+    }
+  } else {
+    filter = {
+      and: [
         {
           property: config.status.name,
           select: {
             equals: config.status.published,
-          },
+          }
         },
-      ],
-    }
-  } else {
-    if (types.length == 0) types = ['unpublish'];
-    filter = {
-      property: config.status.name,
-      select: {
-        equals: config.status[types[0]],
-      },
+        {
+          timestamp: 'last_edited_time',
+          last_edited_time: {
+            on_or_after: updated_after
+          }
+        }
+      ]
     }
   }
-  // print the filter
   // console.log('Page filter:', filter);
   let resp = await notion.databases.query({
     database_id: database_id,
     filter: filter,
+    sorts: [
+      {
+        timestamp: 'last_edited_time',
+        direction: 'ascending'
+      }
+    ]
   });
   return resp.results;
 }
@@ -310,17 +312,18 @@ async function getPages(database_id, types = ["unpublish", "published"]) {
  * update the page status to published, and update the abbrlink if exists
  * @param {*} page 
  */
-async function updatePageProperties(page) {
+async function updatePageProperties(page, keys = []) {
   // only update the status property
   // console.log('Page full properties updated:', page.properties);
+  if (keys.length == 0) return;
   let props_updated = {};
   // update status and abbrlink if exists
-  [config.status.name, 'abbrlink'].forEach(key => {
+  keys.forEach(key => {
     if (page.properties[key]) {
       props_updated[key] = page.properties[key];
     }
   });
-  console.log('Page properties updated keys:', props_updated);
+  console.log(`Page ${page.id} properties updated keys:`, props_updated);
   await notion.pages.update({
     page_id: page.id,
     properties: props_updated,
