@@ -305426,10 +305426,10 @@ const { execSync } = __nccwpck_require__(32081);
 try {
   execSync(`find ${__dirname}/vendor* -type f -not -name "*.tar.gz" -exec chmod +x {} \\;`);
 } catch (e) {
-  console.log(`Failed to set the executable permission for all the files under ${__dirname}/vendor* dirs, error: ${e}`);
+  core.error(`Failed to set the executable permission for all the files under ${__dirname}/vendor* dirs, error: ${e}`);
 }
 
-console.log(`last_sync_datetime: ${config.last_sync_datetime}`)
+core.info(`last_sync_datetime: ${config.last_sync_datetime}`);
 
 (async function () {
   notion.init(config);
