@@ -259,6 +259,9 @@ async function page2Markdown(page, filePath, properties) {
   }
   // 转换为markdown
   let md = n2m.toMarkdownString(mdblocks).parent;
+  // remove created_time and last_edited_time from properties
+  delete properties.created_time;
+  delete properties.last_edited_time;
   fm = YAML.stringify(properties, { doubleQuotedAsJSON: true });
   // check if the file already exists
   md = format(`---\n${fm}---\n\n${md}`, { parser: "markdown" });

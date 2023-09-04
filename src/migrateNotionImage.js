@@ -2,7 +2,7 @@
  * @Author: Dorad, ddxi@qq.com
  * @Date: 2023-09-03 14:22:38 +08:00
  * @LastEditors: Dorad, ddxi@qq.com
- * @LastEditTime: 2023-09-03 15:11:09 +08:00
+ * @LastEditTime: 2023-09-04 09:22:50 +08:00
  * @FilePath: \src\migrateNotionImage.js
  * @Description: 
  * 
@@ -22,6 +22,12 @@ const imageminSvgo = require("imagemin-svgo");
 
 
 async function migrateNotionImageFromURL(ctx, url) {
+    // 检查图片是否为notion的图片
+  const urlReg = /^https:\/\/.*?amazonaws\.com\/.+\.(?:jpg|jpeg|png|gif|webp)\?.+/;
+    if (!urlReg.test(url)) {
+        console.log(`Image ${url} is not a notion image, skip`);
+        return url;
+    }
     // 检查URL对应的图片是否已经存在
     const base_url = ctx.getConfig('pic-base-url') || null;
     const uuidreg = /[a-fA-F0-9]{8}-(?:[a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}/g;
