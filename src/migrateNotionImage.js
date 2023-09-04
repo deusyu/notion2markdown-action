@@ -2,7 +2,7 @@
  * @Author: Dorad, ddxi@qq.com
  * @Date: 2023-09-03 14:22:38 +08:00
  * @LastEditors: Dorad, ddxi@qq.com
- * @LastEditTime: 2023-09-04 09:22:50 +08:00
+ * @LastEditTime: 2023-09-04 11:13:42 +08:00
  * @FilePath: \src\migrateNotionImage.js
  * @Description: 
  * 
@@ -37,7 +37,7 @@ async function migrateNotionImageFromURL(ctx, url) {
     if (base_url) {
         // get pic uuid from the url using regex
         if (await checkPicExist(ctx, picUrl)) {
-            console.log(`Image ${picUrl} already exists, skip`)
+            // console.log(`Image ${picUrl} already exists, skip`)
             return picUrl;
         }
     }
@@ -54,8 +54,7 @@ async function migrateNotionImageFromURL(ctx, url) {
         // 上传图片
         const result = await ctx.upload([imageItem]);
         if (result && result[0] && result[0].imgUrl) {
-            ctx.log.info(`Upload image ${url} success`);
-            ctx.log.info(`New image url: ${result[0].imgUrl}`);
+            ctx.log.info(`Upload image ${result[0].imgUrl} success`);
             return result[0].imgUrl;
         }
         ctx.log.error(`Upload image ${url} fail`);
@@ -100,7 +99,6 @@ async function handlePicFromURL(ctx, url){
     })
     const fileName = path.basename(url).split('?')[0].split('#')[0]
     const imgSize = getImageSize(buffer)
-    console.log(imgSize)
     return {
       buffer,
       fileName,
