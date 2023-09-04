@@ -80,6 +80,8 @@ try {
   console.log(`Failed to set the executable permission for all the files under ${__dirname}/vendor* dirs, error: ${e}`);
 }
 
+console.log(`last_sync_datetime: ${config.last_sync_datetime}`)
+
 (async function () {
   notion.init(config);
   const updated_count = await notion.sync();
