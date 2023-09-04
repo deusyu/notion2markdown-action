@@ -96,6 +96,14 @@ inputs:
     description: 设置的时区
     default: "Asia/Shanghai"
 
+outputs:
+  updated_count:
+    description: |
+      更新的页面数量
+  last_updated_datetime:
+    description: |
+      最后更新的页面的时间
+
 runs:
   using: 'node16'
   main: 'dist/index.js'
