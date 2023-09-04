@@ -2,7 +2,7 @@
  * @Author: Dorad, ddxi@qq.com
  * @Date: 2023-04-12 18:38:51 +02:00
  * @LastEditors: Dorad, ddxi@qq.com
- * @LastEditTime: 2023-09-04 09:52:12 +08:00
+ * @LastEditTime: 2023-09-04 10:35:40 +08:00
  * @FilePath: \src\notion.js
  * @Description: 
  * 
@@ -234,36 +234,45 @@ async function sync() {
 
 async function page2Markdown(page, filePath, properties) {
   const mdblocks = await n2m.pageToMarkdown(page.id);
+  // 转换为markdown
+  let md = n2m.toMarkdownString(mdblocks).parent;
   // 将图床上传和URL替换放到这里，避免后续对于MD文件的二次处理.
   if (config.migrate_image) {
-    // 筛选出所有type为imge的block，并进行处理
-    let imgBlocks = mdblocks.filter((block) => block.type === "image");
-    // 对于所有的图片block，进行并行处理
-    await Promise.all(imgBlocks.map(async (block) => {
-      const mdImageReg = /!\[([^[\]]*)]\(([^)]+)\)/;
-      if (!mdImageReg.test(block.parent)) return;
-      const match = mdImageReg.exec(block.parent);
-      const newPicUrl = await migrateNotionImageFromURL(picgo, match[2]);
-      if (newPicUrl) {
-        block.parent = `![${match[1]}](${newPicUrl})`;
-      }
-      return block;
-    }));
+    // 处理内容图片
+    // find all image url inside markdown.
+    const imgItems = md.match(/!\[.*\]\(([^)]+\.(?:jpg|jpeg|png|gif|bmp|svg|webp).*?)\)/g);
+    if(!imgItems || imgItems.length == 0) {
+      console.log(`No image url found in the markdown file: ${filePath}`);
+    }else{
+      // 对于所有的图片url，进行并行处理
+      const newImageItems = await Promise.all(imgItems.map(async (item) => {
+        const mdImageReg = /!\[([^[\]]*)]\(([^)]+)\)/;
+        if (!mdImageReg.test(item)) return [item,item];
+        const match = mdImageReg.exec(item);
+        const newPicUrl = await migrateNotionImageFromURL(picgo, match[2]);
+        if (newPicUrl) {
+          return [item, `![${match[1]}](${newPicUrl})`]
+        }
+        return [item,item];
+      }));
+      // 替换所有的图片url
+      newImageItems.forEach((item) => {
+        md = md.replace(item[0], item[1]);
+      });
+    }
     // 处理封面图
-    if (page.cover && page.cover.type === "file") {
-      const newPicUrl = await migrateNotionImageFromURL(picgo, page.cover.file.url);
+    // check if the page has image url in fm
+    if (properties.cover && properties.cover.startsWith("https://")) {
+      const newPicUrl = await migrateNotionImageFromURL(picgo, properties.cover);
       if (newPicUrl) {
         properties.cover = newPicUrl;
       }
     }
   }
-  // 转换为markdown
-  let md = n2m.toMarkdownString(mdblocks).parent;
   // remove created_time and last_edited_time from properties
   delete properties.created_time;
   delete properties.last_edited_time;
-  fm = YAML.stringify(properties, { doubleQuotedAsJSON: true });
-  // check if the file already exists
+  let fm = YAML.stringify(properties, { doubleQuotedAsJSON: true });
   md = format(`---\n${fm}---\n\n${md}`, { parser: "markdown" });
   writeFileSync(filePath, md);
 }
