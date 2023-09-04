@@ -180,7 +180,7 @@ async function sync() {
   /**
    * 处理需要更新的文章
    */
-  if(config?.last_sync_datetime && config?.last_sync_datetime !== null && config?.last_sync_datetime !== 0) {
+  if (config?.last_sync_datetime && config.last_sync_datetime !== null) {
     console.info(`Only sync the pages on or after ${config.last_sync_datetime}`);
     notionPagePropList = notionPagePropList.filter((prop) => prop[config.status.name] == config.status.published && moment(prop.last_edited_time) > moment(config.last_sync_datetime));
   }
