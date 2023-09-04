@@ -82,5 +82,7 @@ try {
 
 (async function () {
   notion.init(config);
-  await notion.sync();
+  const updated_count = await notion.sync();
+  // set output
+  core.setOutput("updated_count", updated_count);
 })();

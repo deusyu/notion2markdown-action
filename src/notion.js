@@ -2,7 +2,7 @@
  * @Author: Dorad, ddxi@qq.com
  * @Date: 2023-04-12 18:38:51 +02:00
  * @LastEditors: Dorad, ddxi@qq.com
- * @LastEditTime: 2023-09-03 23:29:39 +08:00
+ * @LastEditTime: 2023-09-04 09:52:12 +08:00
  * @FilePath: \src\notion.js
  * @Description: 
  * 
@@ -186,7 +186,7 @@ async function sync() {
   // deal with notionPagePropList
   if (notionPagePropList.length == 0) {
     console.log("No page to deal with.");
-    return;
+    return 0;
   }
   // 同步处理文章, 提高速度
   const results = await Promise.all(notionPagePropList.map(async (prop) => {
