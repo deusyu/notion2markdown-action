@@ -88,7 +88,8 @@ function init(conf) {
   n2m.setCustomTransformer("image", t.image);
 }
 
-async function sync() {
+async function sync(core = null) {
+  logger = core || console;
   // 获取已发布的文章
   let pages = await getPages(config.database_id);
   /**
@@ -103,7 +104,7 @@ async function sync() {
     switch (properties.type) {
       case "page":
         if (!properties.filename) {
-          console.error(`Page ${properties.title} has no filename, the page id will be used as the filename.`);
+          logger.error(`Page ${properties.title} has no filename, the page id will be used as the filename.`);
           properties.filename = properties.id;
         }
         properties.filePath = path.join(config.output_dir.page, properties.filename, 'index.md');
@@ -121,7 +122,7 @@ async function sync() {
     properties.output_dir = path.dirname(properties.filePath);
     return properties;
   }));
-  console.log(`${notionPagePropList.length} pages found in notion.`);
+  logger.debug(`${notionPagePropList.length} pages found in notion.`);
   // make the output directory if it is not exists
   if (!existsSync(config.output_dir.post)) {
     mkdirSync(config.output_dir.post, { recursive: true });
@@ -148,7 +149,7 @@ async function sync() {
     var page = pages.find((page) => page.id == localProp.id);
     // if the page is not exists, delete the local file
     if ((!page || page == undefined) && config.output_dir.clean_unpublished_post) {
-      console.log(`Page is not exists, delete the local file: ${file}`);
+      logger.debug(`Page is not exists, delete the local file: ${file}`);
       unlinkSync(path.join(config.output_dir.post, file));
       deletedPostList.push(file);
       continue;
@@ -176,32 +177,32 @@ async function sync() {
       await updatePageProperties(page, keysToUpdate);
     }
   }
-  
+
   /**
    * 处理需要更新的文章
    */
   if (config?.last_sync_datetime && config.last_sync_datetime !== null) {
-    if(!moment(config?.last_sync_datetime).isValid()){
-      console.warn(`The last_sync_datetime ${config.last_sync_datetime} isn't valid.`);
+    if (!moment(config?.last_sync_datetime).isValid()) {
+      logger.error(`The last_sync_datetime ${config.last_sync_datetime} isn't valid.`);
     }
-    console.info(`Only sync the pages on or after ${config.last_sync_datetime}`);
+    logger.debug(`Only sync the pages on or after ${config.last_sync_datetime}`);
     notionPagePropList = notionPagePropList.filter((prop) => prop[config.status.name] == config.status.published && moment(prop.last_edited_time) > moment(config.last_sync_datetime));
   }
   // deal with notionPagePropList
   if (notionPagePropList.length == 0) {
-    console.log("No page to deal with.");
+    logger.debug("No page to deal with.");
     return 0;
   }
   // 同步处理文章, 提高速度
   const results = await Promise.all(notionPagePropList.map(async (prop) => {
     let page = pages.find((page) => page.id == prop.id);
-    console.log(`Handle page: ${prop.id}, ${prop.title}`);
+    logger.debug(`Handle page: ${prop.id}, ${prop.title}`);
     /**
      * 只处理未发布的文章
      */
     // skip the page if it is not exists or published
     if (!page || prop[config.status.name] !== config.status.published) {
-      console.log(`Page is not exists or published, skip: ${prop.id}, ${prop.title}`);
+      logger.debug(`Page is not exists or published, skip: ${prop.id}, ${prop.title}`);
       return false;
     }
     /**
@@ -210,7 +211,7 @@ async function sync() {
     // check if the local file exists
     if (!existsSync(prop.filePath)) {
       // the local file is not exists
-      console.log(`File ${prop.filePath} is not exists, it's a new page.`);
+      logger.debug(`File ${prop.filePath} is not exists, it's a new page.`);
     }
     // check the output directory, if the file is not exists, create it
     if (!existsSync(prop.output_dir)) {
@@ -223,10 +224,15 @@ async function sync() {
     // get the latest properties of the page
     const newPageProp = await getPropertiesDict(page);
     await page2Markdown(page, prop.filePath, newPageProp);
-    console.log(`Page conversion successfully: ${prop.id}, ${prop.title}`);
+    logger.debug(`Page conversion successfully: ${prop.id}, ${prop.title}`);
     return true;
   }));
-  console.log(`All pages are handled, ${notionPagePropList.length} pages are handled, ${results.filter((r) => r).length} pages are published, ${deletedPostList.length} pages are deleted.`);
+  if (core) {
+    core.summary(`All pages are handled, ${notionPagePropList.length} pages are handled, ${results.filter((r) => r).length} pages are published, ${deletedPostList.length} pages are deleted.`);
+  } {
+    console.info(`All pages are handled, ${notionPagePropList.length} pages are handled, ${results.filter((r) => r).length} pages are published, ${deletedPostList.length} pages are deleted.`);
+  }
+  return results.filter((r) => r).length;
 }
 
 /**
@@ -245,19 +251,19 @@ async function page2Markdown(page, filePath, properties) {
     // 处理内容图片
     // find all image url inside markdown.
     const imgItems = md.match(/!\[.*\]\(([^)]+\.(?:jpg|jpeg|png|gif|bmp|svg|webp).*?)\)/g);
-    if(!imgItems || imgItems.length == 0) {
-      console.log(`No image url found in the markdown file: ${filePath}`);
-    }else{
+    if (!imgItems || imgItems.length == 0) {
+      console.debug(`No image url found in the markdown file: ${filePath}`);
+    } else {
       // 对于所有的图片url，进行并行处理
       const newImageItems = await Promise.all(imgItems.map(async (item) => {
         const mdImageReg = /!\[([^[\]]*)]\(([^)]+)\)/;
-        if (!mdImageReg.test(item)) return [item,item];
+        if (!mdImageReg.test(item)) return [item, item];
         const match = mdImageReg.exec(item);
         const newPicUrl = await migrateNotionImageFromURL(picgo, match[2]);
         if (newPicUrl) {
           return [item, `![${match[1]}](${newPicUrl})`]
         }
-        return [item,item];
+        return [item, item];
       }));
       // 替换所有的图片url
       newImageItems.forEach((item) => {
@@ -295,7 +301,7 @@ async function getPages(database_id) {
       equals: config.status.published,
     },
   }
-  // console.log('Page filter:', filter);
+  // console.debug('Page filter:', filter);
   let resp = await notion.databases.query({
     database_id: database_id,
     filter: filter,
@@ -315,7 +321,7 @@ async function getPages(database_id) {
  */
 async function updatePageProperties(page, keys = []) {
   // only update the status property
-  // console.log('Page full properties updated:', page.properties);
+  // console.debug('Page full properties updated:', page.properties);
   if (keys.length == 0) return;
   let props_updated = {};
   // update status and abbrlink if exists
@@ -324,7 +330,7 @@ async function updatePageProperties(page, keys = []) {
       props_updated[key] = page.properties[key];
     }
   });
-  console.log(`Page ${page.id} properties updated keys:`, props_updated);
+  console.debug(`Page ${page.id} properties updated keys:`, props_updated);
   await notion.pages.update({
     page_id: page.id,
     properties: props_updated,
@@ -341,7 +347,7 @@ function loadPropertiesAndContentFromMarkdownFile(filepath) {
   // load properties from the markdown file
   // check if the file already exists
   if (!existsSync(filepath)) {
-    console.log('File does not exist:', filepath);
+    console.debug('File does not exist:', filepath);
     return null;
   }
   const content = readFileSync(filepath, 'utf8');
@@ -353,7 +359,7 @@ function loadPropertiesAndContentFromMarkdownFile(filepath) {
     const properties = YAML.parse(fm[1]);
     return properties;
   } catch (e) {
-    console.log('Parse yaml error:', e);
+    console.debug('Parse yaml error:', e);
     return null;
   }
 }
