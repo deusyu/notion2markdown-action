@@ -61,17 +61,7 @@ function init(conf) {
 
   let picgo_config = {
     "picBed": config.picBed,
-    "picgo-plugin-pic-migrater": {
-      // only include notion image
-      include: `^(https://.*?amazonaws\.com\/.+\.(?:jpg|jpeg|png|gif|webp)\?.+)`,
-      exclude: `^(?=.*${domain.replace('.', '\.')}).*|.*\.ico$`, // exclude the domain and icon
-    },
-    "pic-base-url": config.pic_base_url || null,
-    "settings.logLevel": [
-      'success',
-      'error',
-      'warn'
-    ]
+    "pic-base-url": config.pic_base_url || null
   }
 
   picgo_config["compress"] = config.pic_compress ? true : false;
@@ -80,6 +70,9 @@ function init(conf) {
   picgo.setConfig({
     'picBed.transformer': 'base64'
   });
+  picgo.setConfig({
+    'settings.logLevel': ['success', 'error']
+  })
 
   // passing notion client to the option
   n2m = new NotionToMarkdown({ notionClient: notion });
