@@ -23,9 +23,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node_version }}
+          cache: 'npm'
       - name: Install dependencies
         run: |
-          npm install
+          npm ci
           npm i -g @vercel/ncc
       - name: Build ncc
         run: |
