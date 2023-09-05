@@ -84,9 +84,9 @@ try {
   core.startGroup('Notion2markdown-action')
   notion.init(config);
   // get output
-  const out = await notion.sync(core);
+  const out = await notion.sync();
   // set output
   core.setOutput("updated_count", out.handled + out.deleted);
-  core.summary(`Notion2markdown-action finished, queried: ${out.queried}, handled: ${out.handled} and deleted: ${out.deleted}`)
   core.endGroup('Notion2markdown-action');
+  core.notice(`Notion2markdown-action finished, queried: ${out.queried}, handled: ${out.handled} and deleted: ${out.deleted}`)
 })();
