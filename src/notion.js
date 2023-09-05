@@ -66,7 +66,12 @@ function init(conf) {
       include: `^(https://.*?amazonaws\.com\/.+\.(?:jpg|jpeg|png|gif|webp)\?.+)`,
       exclude: `^(?=.*${domain.replace('.', '\.')}).*|.*\.ico$`, // exclude the domain and icon
     },
-    "pic-base-url": config.pic_base_url || null
+    "pic-base-url": config.pic_base_url || null,
+    "settings.logLevel": [
+      'success',
+      'error',
+      'warn'
+    ]
   }
 
   picgo_config["compress"] = config.pic_compress ? true : false;
