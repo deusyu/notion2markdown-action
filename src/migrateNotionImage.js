@@ -22,47 +22,47 @@ const imageminSvgo = require("imagemin-svgo");
 
 
 async function migrateNotionImageFromURL(ctx, url) {
-    // 检查图片是否为notion的图片
+  // 检查图片是否为notion的图片
   const urlReg = /^https:\/\/.*?amazonaws\.com\/.+\.(?:jpg|jpeg|png|gif|webp)\?.+/;
-    if (!urlReg.test(url)) {
-        console.log(`Image ${url} is not a notion image, skip`);
-        return url;
+  if (!urlReg.test(url)) {
+    console.log(`Image ${url} is not a notion image, skip`);
+    return url;
+  }
+  // 检查URL对应的图片是否已经存在
+  const base_url = ctx.getConfig('pic-base-url') || null;
+  const uuidreg = /[a-fA-F0-9]{8}-(?:[a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}/g;
+  const uuid = url.match(uuidreg)?.pop();
+  const ext = url.split('?')[0].split('.').pop()?.toLowerCase();
+  const picUrl = `${base_url}${uuid}.${ext}`;
+  if (base_url) {
+    // get pic uuid from the url using regex
+    if (await checkPicExist(ctx, picUrl)) {
+      // console.log(`Image ${picUrl} already exists, skip`)
+      return picUrl;
     }
-    // 检查URL对应的图片是否已经存在
-    const base_url = ctx.getConfig('pic-base-url') || null;
-    const uuidreg = /[a-fA-F0-9]{8}-(?:[a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}/g;
-    const uuid = url.match(uuidreg)?.pop();
-    const ext = url.split('?')[0].split('.').pop()?.toLowerCase();
-    const picUrl = `${base_url}${uuid}.${ext}`;
-    if (base_url) {
-        // get pic uuid from the url using regex
-        if (await checkPicExist(ctx, picUrl)) {
-            // console.log(`Image ${picUrl} already exists, skip`)
-            return picUrl;
-        }
+  }
+  // 不存在则上传图片
+  try {
+    // 从URL获取图片信息
+    let imageItem = await handlePicFromURL(ctx, url);
+    // 检查是否需要压缩图片
+    if (ctx.getConfig('compress')) {
+      // 压缩图片
+      imageItem = await compressPic(imageItem);
     }
-    // 不存在则上传图片
-    try {
-        // 从URL获取图片信息
-        let imageItem = await handlePicFromURL(ctx, url);
-        // 检查是否需要压缩图片
-        if (ctx.getConfig('compress')) {
-            // 压缩图片
-            imageItem = await compressPic(imageItem);
-        }
-        imageItem.fileName = `${uuid}${imageItem.extname}`;
-        // 上传图片
-        const result = await ctx.upload([imageItem]);
-        if (result && result[0] && result[0].imgUrl) {
-            ctx.log.info(`Upload image ${result[0].imgUrl} success`);
-            return result[0].imgUrl;
-        }
-        ctx.log.error(`Upload image ${url} fail`);
-        return undefined;
-    } catch (e) {
-        ctx.log.error(`Upload image ${url} fail: ${e}`);
-        return undefined;
+    imageItem.fileName = `${uuid}${ext}`;
+    // 上传图片
+    const result = await ctx.upload([imageItem]);
+    if (result && result[0] && result[0].imgUrl) {
+      ctx.log.info(`Upload image ${result[0].imgUrl} success`);
+      return result[0].imgUrl;
     }
+    ctx.log.error(`Upload image ${url} fail`);
+    return undefined;
+  } catch (e) {
+    ctx.log.error(`Upload image ${url} fail: ${e}`);
+    return undefined;
+  }
 }
 
 // 检查图片是否存在
@@ -81,7 +81,7 @@ async function checkPicExist(ctx, picUrl) {
 }
 
 // 从URL获取图片信息
-async function handlePicFromURL(ctx, url){
+async function handlePicFromURL(ctx, url) {
   try {
     if (url.includes("data:image/svg+xml")) {
       let data = url.replace("data:image/svg+xml;utf8,", "");
@@ -156,5 +156,5 @@ function getImageSize(buffer) {
 
 
 module.exports = {
-    migrateNotionImageFromURL
+  migrateNotionImageFromURL
 }
