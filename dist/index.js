@@ -282514,8 +282514,8 @@ async function sync() {
    * 处理需要更新的文章
    */
   if (config?.last_sync_datetime && config.last_sync_datetime !== null) {
-    console.info(`Only sync the pages on or after ${config.last_sync_datetime}`);
-    notionPagePropList = notionPagePropList.filter((prop) => prop[config.status.name] == config.status.published && moment(prop.last_edited_time) > moment(config.last_sync_datetime));
+    console.info(`Only sync the pages on or after ${config.last_sync_datetime.format()}`);
+    notionPagePropList = notionPagePropList.filter((prop) => prop[config.status.name] == config.status.published && moment(prop.last_edited_time) > config.last_sync_datetime);
   }
   // deal with notionPagePropList
   if (notionPagePropList.length == 0) {
@@ -305397,6 +305397,15 @@ if(keys_to_keep && keys_to_keep.trim().length > 0) {
   keys_to_keep = keys_to_keep.split(",").map((key) => key.trim());
 }
 
+var last_sync_datetime = core.getInput("last_sync_datetime") || null
+if (last_sync_datetime && moment(last_sync_datetime).isValid()){
+  last_sync_datetime = moment(last_sync_datetime);
+  core.info(`Valid last_sync_datetime: ${last_sync_datetime.format()}`);
+}else{
+  last_sync_datetime = null;
+  core.warning(`last_sync_datetime provided is not valid for momentjs.`);
+}
+
 let config = {
   notion_secret: core.getInput("notion_secret"),
   database_id: core.getInput("database_id"),
@@ -305414,7 +305423,7 @@ let config = {
     clean_unpublished_post: core.getInput("clean_unpublished_post") === "true" || false,
   },
   keys_to_keep: keys_to_keep,
-  last_sync_datetime: core.getInput("last_sync_datetime") || null,
+  last_sync_datetime: last_sync_datetime,
   timezone: core.getInput("timezone") || "Asia/Shanghai",
 };
 
@@ -305428,8 +305437,6 @@ try {
 } catch (e) {
   core.error(`Failed to set the executable permission for all the files under ${__dirname}/vendor* dirs, error: ${e}`);
 }
-
-core.info(`last_sync_datetime: ${config.last_sync_datetime}`);
 
 (async function () {
   notion.init(config);

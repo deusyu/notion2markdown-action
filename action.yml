@@ -41,8 +41,7 @@ inputs:
   last_sync_datetime:
     required: false
     description: |
-      上次同步Notion数据库的时间, 用于增量同步, 例如: 2021-08-01T00:00:00.000Z
-      采用ISO 8601格式, 详见: https://www.w3.org/TR/NOTE-datetime
+      上次同步Notion数据库的时间, 用于增量同步, 例如: 2023-09-04T17:21:33+00:00, 务必采用moment.js能够解析的格式
       建议采用git中最新一次notion同步的commit时间, 例如: `git log -n 1 --grep="NotionSync" --format="%aI"`
     default: ""
   migrate_image:
@@ -87,11 +86,11 @@ inputs:
   pic_base_url:
     description: |
       图床的基础链接, 例如: https://i.blog.com/image/, 如填写此链接, 在图片上传图床前, 会检查该图片是否已经上传过, 如已上传则跳过, 提升效率。
-    default: ""
+    default: "false"
   pic_compress:
     description: |
       是否开启图片压缩？true为开启, 默认不开启
-    default: ""
+    default: "false"
   timezone: 
     description: 设置的时区
     default: "Asia/Shanghai"
