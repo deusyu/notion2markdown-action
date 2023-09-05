@@ -282426,8 +282426,7 @@ function init(conf) {
   n2m.setCustomTransformer("image", t.image);
 }
 
-async function sync(core = null) {
-  logger = core || console;
+async function sync() {
   // 获取已发布的文章
   let pages = await getPages(config.database_id);
   /**
@@ -282442,7 +282441,7 @@ async function sync(core = null) {
     switch (properties.type) {
       case "page":
         if (!properties.filename) {
-          logger.error(`Page ${properties.title} has no filename, the page id will be used as the filename.`);
+          console.error(`Page ${properties.title} has no filename, the page id will be used as the filename.`);
           properties.filename = properties.id;
         }
         properties.filePath = path.join(config.output_dir.page, properties.filename, 'index.md');
@@ -282460,7 +282459,7 @@ async function sync(core = null) {
     properties.output_dir = path.dirname(properties.filePath);
     return properties;
   }));
-  logger.debug(`${notionPagePropList.length} pages found in notion.`);
+  console.debug(`${notionPagePropList.length} pages found in notion.`);
   // make the output directory if it is not exists
   if (!existsSync(config.output_dir.post)) {
     mkdirSync(config.output_dir.post, { recursive: true });
@@ -282490,7 +282489,7 @@ async function sync(core = null) {
     var notionProp = await getPropertiesDict(page);
     const filename = path.parse(file).name;
     if (((!page || page == undefined) || (notionProp?.filename == undefined && notionProp?.title !== filename) || (notionProp?.filename && notionProp?.filename !== filename)) && config.output_dir.clean_unpublished_post) {
-      logger.debug(`Page is not exists, delete the local file: ${file}`);
+      console.debug(`Page is not exists, delete the local file: ${file}`);
       unlinkSync(path.join(config.output_dir.post, file));
       deletedPostList.push(file);
       continue;
@@ -282523,14 +282522,14 @@ async function sync(core = null) {
    */
   if (config?.last_sync_datetime && config.last_sync_datetime !== null) {
     if (!moment(config?.last_sync_datetime).isValid()) {
-      logger.error(`The last_sync_datetime ${config.last_sync_datetime} isn't valid.`);
+      console.error(`The last_sync_datetime ${config.last_sync_datetime} isn't valid.`);
     }
-    logger.debug(`Only sync the pages on or after ${config.last_sync_datetime}`);
+    console.info(`Only sync the pages on or after ${config.last_sync_datetime}`);
     notionPagePropList = notionPagePropList.filter((prop) => prop[config.status.name] == config.status.published && moment(prop.last_edited_time) > moment(config.last_sync_datetime));
   }
   // deal with notionPagePropList
   if (notionPagePropList.length == 0) {
-    logger.debug("No page to deal with.");
+    console.info("No page to deal with.");
     return {
       queried: notionPagePropList.length,
       handled: 0,
@@ -282540,13 +282539,13 @@ async function sync(core = null) {
   // 同步处理文章, 提高速度
   const results = await Promise.all(notionPagePropList.map(async (prop) => {
     let page = pages.find((page) => page.id == prop.id);
-    logger.debug(`Handle page: ${prop.id}, ${prop.title}`);
+    console.debug(`Handle page: ${prop.id}, ${prop.title}`);
     /**
      * 只处理未发布的文章
      */
     // skip the page if it is not exists or published
     if (!page || prop[config.status.name] !== config.status.published) {
-      logger.debug(`Page is not exists or published, skip: ${prop.id}, ${prop.title}`);
+      console.info(`Page is not exists or published, skip: ${prop.id}, ${prop.title}`);
       return false;
     }
     /**
@@ -282555,7 +282554,7 @@ async function sync(core = null) {
     // check if the local file exists
     if (!existsSync(prop.filePath)) {
       // the local file is not exists
-      logger.debug(`File ${prop.filePath} is not exists, it's a new page.`);
+      console.info(`File ${prop.filePath} is not exists, it's a new page.`);
     }
     // check the output directory, if the file is not exists, create it
     if (!existsSync(prop.output_dir)) {
@@ -282568,7 +282567,7 @@ async function sync(core = null) {
     // get the latest properties of the page
     const newPageProp = await getPropertiesDict(page);
     await page2Markdown(page, prop.filePath, newPageProp);
-    logger.debug(`Page conversion successfully: ${prop.id}, ${prop.title}`);
+    console.info(`Page conversion successfully: ${prop.id}, ${prop.title}`);
     return true;
   }));
   return {
@@ -305453,11 +305452,11 @@ try {
   core.startGroup('Notion2markdown-action')
   notion.init(config);
   // get output
-  const out = await notion.sync(core);
+  const out = await notion.sync();
   // set output
   core.setOutput("updated_count", out.handled + out.deleted);
-  core.summary(`Notion2markdown-action finished, queried: ${out.queried}, handled: ${out.handled} and deleted: ${out.deleted}`)
   core.endGroup('Notion2markdown-action');
+  core.notice(`Notion2markdown-action finished, queried: ${out.queried}, handled: ${out.handled} and deleted: ${out.deleted}`)
 })();
 
 })();
