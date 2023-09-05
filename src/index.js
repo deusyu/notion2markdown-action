@@ -44,7 +44,7 @@ if (pic_base_url && !pic_base_url.endsWith("/")) {
 }
 
 var keys_to_keep = core.getInput("keys_to_keep");
-if(keys_to_keep && keys_to_keep.trim().length > 0) {
+if (keys_to_keep && keys_to_keep.trim().length > 0) {
   keys_to_keep = keys_to_keep.split(",").map((key) => key.trim());
 }
 
@@ -83,8 +83,10 @@ try {
 (async function () {
   core.startGroup('Notion2markdown-action')
   notion.init(config);
-  const updated_count = await notion.sync(core);
+  // get output
+  const out = await notion.sync(core);
   // set output
-  core.setOutput("updated_count", updated_count);
+  core.setOutput("updated_count", out.handled + out.deleted);
+  core.summary(`Notion2markdown-action finished, queried: ${out.queried}, handled: ${out.handled} and deleted: ${out.deleted}`)
   core.endGroup('Notion2markdown-action');
 })();
