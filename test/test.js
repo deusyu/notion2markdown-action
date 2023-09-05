@@ -18,8 +18,9 @@ const configRaw = fs.readFileSync("./config.json");
 const config = JSON.parse(configRaw);
 // const config = ;
 (async function () {
-    core.startGroup('Notion2markdown-action')
     notion.init(config);
-    await notion.sync();
-    core.endGroup('Notion2markdown-action');
+    // get output
+    const out = await notion.sync();
+    console.info(`Notion2markdown-action finished, queried: ${out.queried}, handled: ${out.handled} and deleted: ${out.deleted}`)
 })();
+

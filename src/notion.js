@@ -151,15 +151,17 @@ async function sync(core = null) {
     if (!localProp) {
       continue;
     }
-    var page = pages.find((page) => page.id == localProp.id);
-    // if the page is not exists, delete the local file
-    if ((!page || page == undefined) && config.output_dir.clean_unpublished_post) {
+    var page = pages.find((page) => {
+      return page.id == localProp.id
+    });
+    var notionProp = await getPropertiesDict(page);
+    const filename = path.parse(file).name;
+    if (((!page || page == undefined) || (notionProp?.filename == undefined && notionProp?.title !== filename) || (notionProp?.filename && notionProp?.filename !== filename)) && config.output_dir.clean_unpublished_post) {
       logger.debug(`Page is not exists, delete the local file: ${file}`);
       unlinkSync(path.join(config.output_dir.post, file));
       deletedPostList.push(file);
       continue;
     }
-    var notionProp = await getPropertiesDict(page);
     // if the page is exists, update the abbrlink of the page if it is empty and the local file has the abbrlink
     // handle the keys_to_keep, to update it
     if (config.keys_to_keep && config.keys_to_keep.length > 0) {
@@ -196,7 +198,11 @@ async function sync(core = null) {
   // deal with notionPagePropList
   if (notionPagePropList.length == 0) {
     logger.debug("No page to deal with.");
-    return 0;
+    return {
+      queried: notionPagePropList.length,
+      handled: 0,
+      deleted: deletedPostList.length
+    };
   }
   // 同步处理文章, 提高速度
   const results = await Promise.all(notionPagePropList.map(async (prop) => {
@@ -232,12 +238,11 @@ async function sync(core = null) {
     logger.debug(`Page conversion successfully: ${prop.id}, ${prop.title}`);
     return true;
   }));
-  if (core) {
-    core.summary(`All pages are handled, ${notionPagePropList.length} pages are handled, ${results.filter((r) => r).length} pages are published, ${deletedPostList.length} pages are deleted.`);
-  } {
-    console.info(`All pages are handled, ${notionPagePropList.length} pages are handled, ${results.filter((r) => r).length} pages are published, ${deletedPostList.length} pages are deleted.`);
-  }
-  return results.filter((r) => r).length;
+  return {
+    queried: notionPagePropList.length,
+    handled: results.filter((r) => r).length,
+    deleted: deletedPostList.length
+  };
 }
 
 /**
@@ -361,7 +366,8 @@ function loadPropertiesAndContentFromMarkdownFile(filepath) {
   // parse the front matter
   if (!fm) return null;
   try {
-    const properties = YAML.parse(fm[1]);
+    let properties = YAML.parse(fm[1]);
+    properties.filename = path.parse(filepath).name;
     return properties;
   } catch (e) {
     console.debug('Parse yaml error:', e);
