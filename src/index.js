@@ -81,8 +81,10 @@ try {
 }
 
 (async function () {
+  core.startGroup('Notion2markdown-action')
   notion.init(config);
-  const updated_count = await notion.sync();
+  const updated_count = await notion.sync(core);
   // set output
   core.setOutput("updated_count", updated_count);
+  core.endGroup('Notion2markdown-action');
 })();
