@@ -23,7 +23,7 @@ const imageminSvgo = require("imagemin-svgo");
 
 async function migrateNotionImageFromURL(ctx, url) {
   // 检查图片是否为notion的图片
-  const urlReg = /^https:\/\/.*?amazonaws\.com\/.+\.(?:jpg|jpeg|png|gif|webp)\?.+/;
+  const urlReg = /^https:\/\/.*?amazonaws\.com\/.+\.(?:jpg|jpeg|bmp|tif|tiff|svg|png|gif|webp)\?.+/;
   if (!urlReg.test(url)) {
     console.log(`Image ${url} is not a notion image, skip`);
     return url;
@@ -46,11 +46,11 @@ async function migrateNotionImageFromURL(ctx, url) {
     // 从URL获取图片信息
     let imageItem = await handlePicFromURL(ctx, url);
     // 检查是否需要压缩图片
-    if (ctx.getConfig('compress')) {
+    if (ctx.getConfig('compress') && ext!=='svg') {
       // 压缩图片
       imageItem = await compressPic(imageItem);
     }
-    imageItem.fileName = `${uuid}${ext}`;
+    imageItem.fileName = `${uuid}.${ext}`;
     // 上传图片
     const result = await ctx.upload([imageItem]);
     if (result && result[0] && result[0].imgUrl) {
