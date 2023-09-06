@@ -38,7 +38,6 @@ let config = {
     clean_unpublished_post: true,
   },
   timezone: "Asia/Shanghai",
-  pic_base_url: "",
   pic_compress: false,
   last_sync_datetime: 0,
   keys_to_keep: [],
@@ -57,11 +56,16 @@ function init(conf) {
     }
   });
 
-  const domain = new URL(config.pic_base_url).hostname;
+  if (!config?.pic_base_url && config.picBed?.uploader) {
+    const bed = config.picBed[config.picBed?.uploader]
+    if (bed?.customUrl && bed?.path) {
+      config.pic_base_url = new URL(bed.path, bed.customUrl).href;
+    }
+  }
 
   let picgo_config = {
     "picBed": config.picBed,
-    "pic-base-url": config.pic_base_url || null
+    "pic-base-url": config?.pic_base_url || null
   }
 
   picgo_config["compress"] = config.pic_compress ? true : false;

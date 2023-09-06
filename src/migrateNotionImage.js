@@ -20,7 +20,6 @@ const imageminGifsicle = require("imagemin-gifsicle");
 const imageminSvgo = require("imagemin-svgo");
 
 
-
 async function migrateNotionImageFromURL(ctx, url) {
   // 检查图片是否为notion的图片
   const urlReg = /^https:\/\/.*?amazonaws\.com\/.+\.(?:jpg|jpeg|bmp|tif|tiff|svg|png|gif|webp)\?.+/;
@@ -33,8 +32,8 @@ async function migrateNotionImageFromURL(ctx, url) {
   const uuidreg = /[a-fA-F0-9]{8}-(?:[a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}/g;
   const uuid = url.match(uuidreg)?.pop();
   const ext = url.split('?')[0].split('.').pop()?.toLowerCase();
-  const picUrl = `${base_url}${uuid}.${ext}`;
   if (base_url) {
+    const picUrl = new URL(`${uuid}.${ext}`, base_url).href;
     // get pic uuid from the url using regex
     if (await checkPicExist(ctx, picUrl)) {
       // console.log(`Image ${picUrl} already exists, skip`)
