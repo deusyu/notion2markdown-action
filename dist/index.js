@@ -149851,7 +149851,7 @@ module.exports = new BinWrapper()
 	.src(`${url}macos/cjpeg`, 'darwin')
 	.src(`${url}linux/cjpeg`, 'linux')
 	.src(`${url}win/cjpeg.exe`, 'win32')
-	.dest(__nccwpck_require__.ab + "vendor2")
+	.dest(__nccwpck_require__.ab + "vendor1")
 	.use(process.platform === 'win32' ? 'cjpeg.exe' : 'cjpeg');
 
 
@@ -166015,7 +166015,7 @@ module.exports = new BinWrapper()
 	.src(`${url}linux/x64/pngquant`, 'linux', 'x64')
 	.src(`${url}freebsd/x64/pngquant`, 'freebsd', 'x64')
 	.src(`${url}win/pngquant.exe`, 'win32')
-	.dest(__nccwpck_require__.ab + "vendor1")
+	.dest(__nccwpck_require__.ab + "vendor2")
 	.use(process.platform === 'win32' ? 'pngquant.exe' : 'pngquant');
 
 
@@ -282484,7 +282484,7 @@ async function sync() {
     });
     var notionProp = await getPropertiesDict(page);
     const filename = path.parse(file).name;
-    if (((!page || page == undefined) || (notionProp?.filename == undefined && notionProp?.title !== filename) || (notionProp?.filename && notionProp?.filename !== filename)) && config.output_dir.clean_unpublished_post) {
+    if (((!page || page == undefined) || !notionProp || (notionProp?.filename == undefined && notionProp?.title !== filename) || (notionProp?.filename && notionProp?.filename !== filename)) && config.output_dir.clean_unpublished_post) {
       console.debug(`Page is not exists, delete the local file: ${file}`);
       unlinkSync(path.join(config.output_dir.post, file));
       deletedPostList.push(file);
@@ -282709,6 +282709,7 @@ function loadPropertiesAndContentFromMarkdownFile(filepath) {
  * @returns {Object}
  */
 async function getPropertiesDict(page) {
+  if(!page) return {};
   let data = {};
   for (const key in page.properties) {
     const value = getPropVal(page.properties[key]);
