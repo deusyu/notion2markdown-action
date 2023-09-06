@@ -19,8 +19,8 @@ function isJson(str) {
   return false;
 }
 
-var migrate_image = core.getInput("migrate_image") === "true" || false;
-const picBedConfigStr = core.getInput("pic_bed_config") || core.getInput("picBedConfig") || "{}";
+var migrate_image = core.getInput("pic_migrate") === "true" || false;
+const picBedConfigStr = core.getInput("pic_bed_config") || "{}";
 
 // test the picBed config
 if (!isJson(picBedConfigStr)) {
@@ -51,8 +51,8 @@ let config = {
     published: core.getInput("status_published") || "已发布",
   },
   output_dir: {
-    page: core.getInput("page_output_dir") || "source/",
-    post: core.getInput("post_output_dir") || "source/_posts/notion/",
+    page: core.getInput("output_page_dir") || "source/",
+    post: core.getInput("output_post_dir") || "source/_posts/notion/",
     clean_unpublished_post: core.getInput("clean_unpublished_post") === "true" || false,
   },
   keys_to_keep: keys_to_keep,

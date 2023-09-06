@@ -19,11 +19,11 @@ inputs:
     required: false
     description: notion database 文章已发布状态的字段值
     default: "已发布"
-  page_output_dir:
+  output_page_dir:
     required: false
     description: page类型页面的输出文件夹
     default: "source/"
-  post_output_dir:
+  output_post_dir:
     required: false
     description: post类型页面的输出文件夹
     default: "source/_posts/notion"
@@ -44,14 +44,14 @@ inputs:
       上次同步Notion数据库的时间, 用于增量同步, 例如: 2023-09-04T17:21:33+00:00, 务必采用moment.js能够解析的格式
       建议采用git中最新一次notion同步的commit时间, 例如: `git log -n 1 --grep="NotionSync" --format="%aI"`
     default: ""
-  migrate_image:
+  pic_migrate:
     required: false
     description: |
       是否迁移图片到图床
       注意: 如果不迁移图片默认导出图片链接是 notion 的自带链接, 有访问时效
       目前支持迁移图片到多类图床中, 采用的是PicGO-Core.
     default: "false"
-  picBedConfig: 
+  pic_bed_config: 
     description: |
       picgo-core中picBed配置文件, 支持多类型图床。
       example:
@@ -95,9 +95,6 @@ outputs:
   updated_count:
     description: |
       更新的页面数量
-  last_updated_datetime:
-    description: |
-      最后更新的页面的时间
 
 runs:
   using: 'node16'
