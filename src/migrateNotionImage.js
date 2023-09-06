@@ -31,7 +31,9 @@ async function migrateNotionImageFromURL(ctx, url) {
   const base_url = ctx.getConfig('pic-base-url') || null;
   const uuidreg = /[a-fA-F0-9]{8}-(?:[a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}/g;
   const uuid = url.match(uuidreg)?.pop();
-  const ext = url.split('?')[0].split('.').pop()?.toLowerCase();
+  let ext = url.split('?')[0].split('.').pop()?.toLowerCase();
+  ext = ext == 'jpeg' ? 'jpg' : ext; // replace jpeg with jpg
+  ext = ext == 'tiff' ? 'tif' : ext; // replace tiff with tif
   if (base_url) {
     const picUrl = new URL(`${uuid}.${ext}`, base_url).href;
     // get pic uuid from the url using regex
@@ -45,7 +47,7 @@ async function migrateNotionImageFromURL(ctx, url) {
     // 从URL获取图片信息
     let imageItem = await handlePicFromURL(ctx, url);
     // 检查是否需要压缩图片
-    if (ctx.getConfig('compress') && ext!=='svg') {
+    if (ctx.getConfig('compress') && ext !== 'svg') {
       // 压缩图片
       imageItem = await compressPic(imageItem);
     }
