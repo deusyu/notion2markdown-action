@@ -152,7 +152,7 @@ async function sync() {
     });
     var notionProp = await getPropertiesDict(page);
     const filename = path.parse(file).name;
-    if (((!page || page == undefined) || (notionProp?.filename == undefined && notionProp?.title !== filename) || (notionProp?.filename && notionProp?.filename !== filename)) && config.output_dir.clean_unpublished_post) {
+    if (((!page || page == undefined) || !notionProp || (notionProp?.filename == undefined && notionProp?.title !== filename) || (notionProp?.filename && notionProp?.filename !== filename)) && config.output_dir.clean_unpublished_post) {
       console.debug(`Page is not exists, delete the local file: ${file}`);
       unlinkSync(path.join(config.output_dir.post, file));
       deletedPostList.push(file);
@@ -377,6 +377,7 @@ function loadPropertiesAndContentFromMarkdownFile(filepath) {
  * @returns {Object}
  */
 async function getPropertiesDict(page) {
+  if(!page) return {};
   let data = {};
   for (const key in page.properties) {
     const value = getPropVal(page.properties[key]);
