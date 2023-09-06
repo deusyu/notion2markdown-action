@@ -17,24 +17,23 @@ function isJson(str) {
     const obj = JSON.parse(str);
     if (obj && typeof obj == "object") return true;
   } catch (e) { }
-
   return false;
 }
 
 var migrate_image = core.getInput("migrate_image") === "true" || false;
-const picBedConfigStr = core.getInput("picBedConfig") || "{}";
+const picBedConfigStr = core.getInput("pic_bed_config") || core.getInput("picBedConfig") || "{}";
 
 // test the picBed config
 if (!isJson(picBedConfigStr)) {
-  core.warning("picBedConfig is not a valid json string, use default config: {}, and set migrate_image to false.");
+  core.warning("pic_bed_config is not a valid json string, use default config: {}, and set migrate_image to false.");
   migrate_image = false;
 }
 
-var picBedConfig = {};
+var pic_bed_config = {};
 
 if (migrate_image) {
-  core.info("migrate_image is true, use picBedConfig to upload images.");
-  picBedConfig = JSON.parse(picBedConfigStr);
+  core.info("migrate_image is true, use pic_bed_config to upload images.");
+  pic_bed_config = JSON.parse(picBedConfigStr);
 }
 
 var pic_base_url = core.getInput("pic_base_url") || null;
@@ -52,7 +51,7 @@ let config = {
   notion_secret: core.getInput("notion_secret"),
   database_id: core.getInput("database_id"),
   migrate_image: migrate_image || false,
-  picBed: picBedConfig || {},
+  picBed: pic_bed_config || {},
   pic_base_url: pic_base_url || null,
   pic_compress: core.getInput("pic_compress") === "true" || false,
   status: {
