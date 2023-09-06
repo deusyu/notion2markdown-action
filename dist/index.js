@@ -282187,7 +282187,6 @@ const imageminGifsicle = __nccwpck_require__(60006);
 const imageminSvgo = __nccwpck_require__(14038);
 
 
-
 async function migrateNotionImageFromURL(ctx, url) {
   // 检查图片是否为notion的图片
   const urlReg = /^https:\/\/.*?amazonaws\.com\/.+\.(?:jpg|jpeg|bmp|tif|tiff|svg|png|gif|webp)\?.+/;
@@ -282200,8 +282199,8 @@ async function migrateNotionImageFromURL(ctx, url) {
   const uuidreg = /[a-fA-F0-9]{8}-(?:[a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}/g;
   const uuid = url.match(uuidreg)?.pop();
   const ext = url.split('?')[0].split('.').pop()?.toLowerCase();
-  const picUrl = `${base_url}${uuid}.${ext}`;
   if (base_url) {
+    const picUrl = new URL(`${uuid}.${ext}`, base_url).href;
     // get pic uuid from the url using regex
     if (await checkPicExist(ctx, picUrl)) {
       // console.log(`Image ${picUrl} already exists, skip`)
@@ -282371,7 +282370,6 @@ let config = {
     clean_unpublished_post: true,
   },
   timezone: "Asia/Shanghai",
-  pic_base_url: "",
   pic_compress: false,
   last_sync_datetime: 0,
   keys_to_keep: [],
@@ -282390,11 +282388,16 @@ function init(conf) {
     }
   });
 
-  const domain = new URL(config.pic_base_url).hostname;
+  if (!config?.pic_base_url && config.picBed?.uploader) {
+    const bed = config.picBed[config.picBed?.uploader]
+    if (bed?.customUrl && bed?.path) {
+      config.pic_base_url = new URL(bed.path, bed.customUrl).href;
+    }
+  }
 
   let picgo_config = {
     "picBed": config.picBed,
-    "pic-base-url": config.pic_base_url || null
+    "pic-base-url": config?.pic_base_url || null
   }
 
   picgo_config["compress"] = config.pic_compress ? true : false;
@@ -282950,6 +282953,14 @@ module.exports = require("http");
 
 "use strict";
 module.exports = require("https");
+
+/***/ }),
+
+/***/ 31405:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("inspector");
 
 /***/ }),
 
@@ -305372,7 +305383,6 @@ var __webpack_exports__ = {};
 const notion = __nccwpck_require__(64281);
 const core = __nccwpck_require__(45463);
 
-
 function isJson(str) {
   try {
     const obj = JSON.parse(str);
@@ -305397,12 +305407,6 @@ if (migrate_image) {
   pic_bed_config = JSON.parse(picBedConfigStr);
 }
 
-var pic_base_url = core.getInput("pic_base_url") || null;
-
-if (pic_base_url && !pic_base_url.endsWith("/")) {
-  pic_base_url = pic_base_url + "/";
-}
-
 var keys_to_keep = core.getInput("keys_to_keep");
 if (keys_to_keep && keys_to_keep.trim().length > 0) {
   keys_to_keep = keys_to_keep.split(",").map((key) => key.trim());
@@ -305413,7 +305417,6 @@ let config = {
   database_id: core.getInput("database_id"),
   migrate_image: migrate_image || false,
   picBed: pic_bed_config || {},
-  pic_base_url: pic_base_url || null,
   pic_compress: core.getInput("pic_compress") === "true" || false,
   status: {
     name: core.getInput("status_name") || "status",
@@ -305433,6 +305436,8 @@ let config = {
 process.env.PATH = __dirname + ":" + process.env.PATH;
 // add all the exec file under __dirname/vendor* dirs the executable permission expect the source dir
 const { execSync } = __nccwpck_require__(32081);
+const { url } = __nccwpck_require__(31405);
+const { BADFAMILY } = __nccwpck_require__(9523);
 // try to find all the files under __dirname/vendor* dirs and set the executable permission
 try {
   execSync(`find ${__dirname}/vendor* -type f -not -name "*.tar.gz" -exec chmod +x {} \\;`);

@@ -11,7 +11,6 @@
 const notion = require("./notion");
 const core = require("@actions/core");
 
-
 function isJson(str) {
   try {
     const obj = JSON.parse(str);
@@ -36,12 +35,6 @@ if (migrate_image) {
   pic_bed_config = JSON.parse(picBedConfigStr);
 }
 
-var pic_base_url = core.getInput("pic_base_url") || null;
-
-if (pic_base_url && !pic_base_url.endsWith("/")) {
-  pic_base_url = pic_base_url + "/";
-}
-
 var keys_to_keep = core.getInput("keys_to_keep");
 if (keys_to_keep && keys_to_keep.trim().length > 0) {
   keys_to_keep = keys_to_keep.split(",").map((key) => key.trim());
@@ -52,7 +45,6 @@ let config = {
   database_id: core.getInput("database_id"),
   migrate_image: migrate_image || false,
   picBed: pic_bed_config || {},
-  pic_base_url: pic_base_url || null,
   pic_compress: core.getInput("pic_compress") === "true" || false,
   status: {
     name: core.getInput("status_name") || "status",
@@ -72,6 +64,8 @@ let config = {
 process.env.PATH = __dirname + ":" + process.env.PATH;
 // add all the exec file under __dirname/vendor* dirs the executable permission expect the source dir
 const { execSync } = require("child_process");
+const { url } = require("inspector");
+const { BADFAMILY } = require("dns");
 // try to find all the files under __dirname/vendor* dirs and set the executable permission
 try {
   execSync(`find ${__dirname}/vendor* -type f -not -name "*.tar.gz" -exec chmod +x {} \\;`);
