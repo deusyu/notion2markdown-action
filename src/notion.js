@@ -75,7 +75,7 @@ function init(conf) {
     'picBed.transformer': 'base64'
   });
   picgo.setConfig({
-    'settings.logLevel': ['success', 'error']
+    'settings.logLevel': ['success', 'error', 'warn']
   })
 
   // passing notion client to the option
