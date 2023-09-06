@@ -56,8 +56,7 @@
 
 | 名称 | 必要 | 默认值 | 说明 | 示例 |
 | --- | --- | --- | --- | --- |
-| notion_secret | 是 | 无 | Notion Secret, 建议最好放到 Action Secret 中。
-获取方法见：https://www.notion.so/help/create-integrations-with-the-notion-api | ${{ secrets.NOTION_SECRET }} |
+| notion_secret | 是 | 无 | Notion Secret, 建议最好放到 Action Secret 中。获取方法见：https://www.notion.so/help/create-integrations-with-the-notion-api | ${{ secrets.NOTION_SECRET }} |
 | database_id | 是 | 无 | Notion数据库ID，假设你的数据库页面链接是 https://www.notion.so/username/0f3d856498ca4db3b457c5b4eeaxxxx?v=xxxx，那么0f3d856498ca4db3b457c5b4eeaxxxx就是你的数据库ID | ${{ secrets.NOTION_DATABASE_ID }} |
 | status_name | 否 | status | Notion数据库中，用于区分页面状态的字段名, 支持自定义 | status |
 | status_published | 否 | 已发布 | Notion数据库中，文章已发布状态的字段值 | 已发布 |
@@ -77,8 +76,7 @@
 | 名称 | 必要 | 默认值 | 描述 | 示例 |
 | --- | --- | --- | --- | --- |
 | migrate_image | 否 | false | 是否迁移图片到图床。注意: 如果不迁移图片默认导出图片链接是 notion 的自带链接, 访问时效仅一小时。 | true |
-| pic_bed_config | 否 | {} | 当开启图床时，PicGo-Core中picBed部分的配置, 支持多类型图床。
-详见: https://picgo.github.io/PicGo-Core-Doc/zh/guide/config.html#%E6%89%8B%E5%8A%A8%E7%94%9F%E6%88%90 | 详见后文 |
+| pic_bed_config | 否 | {} | 当开启图床时，PicGo-Core中picBed部分的配置, 支持多类型图床。详见: https://picgo.github.io/PicGo-Core-Doc/zh/guide/config.html#%E6%89%8B%E5%8A%A8%E7%94%9F%E6%88%90 | 详见后文 |
 | pic_compress | 否 | false | 图片上传图床前，是否进行图片压缩 | true |
 
 图床参数中，`pic_bed_config`和`pic_base_url`的配置较为关键。
@@ -134,6 +132,15 @@
 }
 ```
 
+## 输出
+
+`Actions`执行结束，会给一个输出，报告更新的页面数量。
+
+| 字段 | 类型 | 描述 |
+| --- | --- | --- |
+| updated_count | 文本 | 更新的页面数量 |
+
+使用时，可以调用`steps.{step_id}.outputs.updated_count`，以获取页面更新数量，包含添加、更新和删除的页面数总和。
 
 ## [最新教程见博客](https://blog.cuger.cn/p/634642fd/) 
 
