@@ -26,25 +26,19 @@
 
 # 食用方法
 
-直接在GitHub Actions中的workflow使用本插件即可。使用该Action即可将Notion页面转为Markdown文件。
-代码段如下：
+直接在GitHub Actions中的workflow使用本插件即可。极简代码段如下：
 
 ```yaml
-      - name: Convert notion to markdown
-        id: NotionSync
-        uses: Doradx/notion2markdown-action@v1
-        with:
-          notion_secret: ${{ secrets.NOTION_TOKEN }}
-          database_id: ${{ secrets.NOTION_DATABASE_ID }}
-          pic_migrate: true
-          pic_bed_config: ${{ secrets.PICBED_CONFIG }}
-          pic_compress: true
-          output_page_dir: 'source'
-          output_post_dir: 'source/_posts/notion'
-          clean_unpublished_post: true
-          keys_to_keep: abbrlink
-          last_sync_datetime: '2023-09-04T17:21:33+00:00'
+- name: Convert notion to markdown
+  uses: Doradx/notion2markdown-action@v1
+  with:
+    notion_secret: ${{ secrets.NOTION_TOKEN }}
+    database_id: ${{ secrets.NOTION_DATABASE_ID }}
 ```
+> 该极简代码未开启图片上传，所得的Markdown中的图片链接为Notion的临时链接，有效期一小时。
+
+使用该`Action`即可将`Notion`页面转为Markdown文件。
+如需图床，或更多配置，请查看以下参数配置说明。
 
 ## 参数
 
@@ -57,13 +51,14 @@
 | 名称 | 必要 | 默认值 | 说明 | 示例 |
 | --- | --- | --- | --- | --- |
 | notion_secret | 是 | 无 | Notion Secret, 建议最好放到 Action Secret 中。获取方法见：https://www.notion.so/help/create-integrations-with-the-notion-api | ${{ secrets.NOTION_SECRET }} |
-| database_id | 是 | 无 | Notion数据库ID，假设你的数据库页面链接是 https://www.notion.so/username/0f3d856498ca4db3b457c5b4eeaxxxx?v=xxxx，那么0f3d856498ca4db3b457c5b4eeaxxxx就是你的数据库ID | ${{ secrets.NOTION_DATABASE_ID }} |
+| database_id | 是 | 无 | Notion数据库ID，假设你的数据库页面链接是https://www.notion.so/username/0f3d856498ca4db3b457c5b4eeaxxxx?v=xxxx，那么0f3d856498ca4db3b457c5b4eeaxxxx就是你的数据库ID | ${{ secrets.NOTION_DATABASE_ID }} |
 | status_name | 否 | status | Notion数据库中，用于区分页面状态的字段名, 支持自定义 | status |
 | status_published | 否 | 已发布 | Notion数据库中，文章已发布状态的字段值 | 已发布 |
 | page_output_dir | 否 | source/ | 将Notion页面type字段为page的页面，保存到GitHub中的page_output_dir路径下 | source/ |
 | post_output_dir | 否 | source/_posts/notion | 将Notion页面type字段为page的页面，保存到GitHub中的post_output_dir路径下 | source/_posts/notion |
 | clean_unpublished_post | 否 | false | 是否开启文章删除功能，也就是Notion中状态从[已发布]改为其它的文章，是否在GitHub中移除？建议开启，但要确保post_output_dir下仅有Notion同步的文章！！！否则可能删除原已存在的文章 | true |
-| keys_to_keep | 否 | abbrlink | 在文章同步时，Markdown元数据中需要同步到Notion页面属性的字段，多个值请用逗号隔开，例如：abbrlink,date | abbrlink,date |
+| metas_keeped | 否 | abbrlink | 在文章同步时，Markdown元数据中需要保留，并同步到Notion页面属性的字段，多个值请用逗号隔开，例如：abbrlink,date | abbrlink,date |
+| metas_excluded | 否 | ptype, pstatus | 在文章同步时，需要从Markdown中移除的Notion页面属性 | ptype, pstatus |
 | last_sync_datetime | 否 | 无 | 上次同步Notion数据库的时间, 用于增量同步, 务必采用moment.js能够解析的格式。建议采用git中最新一次Notion同步的commit时间, 例如: git log -n 1 --grep="NotionSync" --format="%aI" | 2023-09-04T17:21:33+00:00 |
 | timezone | 否 | Asia/Shanghai | 时区。Notion页面属性中，ISO时间转为本地时间，本地时区。 | Asia/Shanghai |
 

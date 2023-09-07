@@ -31,13 +31,18 @@ inputs:
     required: false
     description: 是否清除未发表的post
     default: "false"
-  keys_to_keep: 
+  metas_keeped: 
     required: false
     description: |
       转换后markdown文件中需要保留的字段, 字段值会同步到Notion中。
       例如abbrlink等字段, 在notion->markdown过程不存在, 但需要hexo等博客自动生成, 且不能变化。
       多个key请用逗号分隔, 如abbrlink, id
     default: "abbrlink"
+  metas_excluded:
+    default: "ptype,pstatus"
+    description: |
+      Notion转Markdown, 生成页面YAML是需要删除的属性名称, 多个用逗号分隔
+      需要删除的页面属性名称
   last_sync_datetime:
     required: false
     description: |
@@ -87,11 +92,6 @@ inputs:
     description: |
       是否开启图片压缩? true为开启, 默认不开启
     default: "false"
-  excluded_metas:
-    default: "ptype, pstatus"
-    description: |
-      Notion转Markdown, 生成页面YAML是需要删除的属性名称, 多个用逗号分隔
-      需要删除的页面属性名称
   timezone: 
     description: 设置的时区
     default: "Asia/Shanghai"

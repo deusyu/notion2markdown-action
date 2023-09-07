@@ -40,7 +40,7 @@ let config = {
   timezone: "Asia/Shanghai",
   pic_compress: false,
   last_sync_datetime: 0,
-  keys_to_keep: [],
+  metas_keeped: [],
 };
 
 let notion = new Client({ auth: config.notion_secret });
@@ -159,11 +159,11 @@ async function sync() {
       continue;
     }
     // if the page is exists, update the abbrlink of the page if it is empty and the local file has the abbrlink
-    // handle the keys_to_keep, to update it
-    if (config.keys_to_keep && config.keys_to_keep.length > 0) {
+    // handle the metas_keeped, to update it
+    if (config.metas_keeped && config.metas_keeped.length > 0) {
       let keysToUpdate = [];
-      for (let i = 0; i < config.keys_to_keep.length; i++) {
-        const key = config.keys_to_keep[i];
+      for (let i = 0; i < config.metas_keeped.length; i++) {
+        const key = config.metas_keeped[i];
         if (localProp[key] && page.properties.hasOwnProperty(key) && !notionProp[key]) {
           page.properties[key].rich_text.push({
             "type": "text",
@@ -286,9 +286,9 @@ async function page2Markdown(page, filePath, properties) {
     }
   }
   // remove created_time and last_edited_time from properties
-  if (config?.excluded_metas && config.excluded_metas.length){
-    // delete the key within excluded_metas for properties
-    for(const key of config.excluded_metas){
+  if (config?.metas_excluded && config.metas_excluded.length){
+    // delete the key within metas_excluded for properties
+    for(const key of config.metas_excluded){
       if(key && key in properties) {
         delete properties[key];
       }

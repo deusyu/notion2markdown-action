@@ -35,17 +35,17 @@ if (migrate_image) {
   pic_bed_config = JSON.parse(picBedConfigStr);
 }
 
-var keys_to_keep = core.getInput("keys_to_keep");
-if (keys_to_keep && keys_to_keep.trim().length > 0) {
-  keys_to_keep = keys_to_keep.split(",").map((key) => key.trim());
+var metas_keeped = core.getInput("metas_keeped");
+if (metas_keeped && metas_keeped.trim().length > 0) {
+  metas_keeped = metas_keeped.split(",").map((key) => key.trim());
 }
 
-var excluded_metas = core.getInput("excluded_metas") || [];
-if(excluded_metas){
-  excluded_metas = excluded_metas.split(',');
-  // use trim to remove space for excluded_metas;
-  excluded_metas = excluded_metas.forEach((v)=>v.trim());
-  excluded_metas = excluded_metas.filter((v)=>v);
+var metas_excluded = core.getInput("metas_excluded") || [];
+if(metas_excluded){
+  metas_excluded = metas_excluded.split(',');
+  // use trim to remove space for metas_excluded;
+  metas_excluded = metas_excluded.forEach((v)=>v.trim());
+  metas_excluded = metas_excluded.filter((v)=>v);
 }
 
 let config = {
@@ -63,9 +63,9 @@ let config = {
     post: core.getInput("output_post_dir") || "source/_posts/notion/",
     clean_unpublished_post: core.getInput("clean_unpublished_post") === "true" || false,
   },
-  keys_to_keep: keys_to_keep,
+  metas_keeped: metas_keeped,
   last_sync_datetime: core.getInput("last_sync_datetime") || null,
-  excluded_metas: excluded_metas || [],
+  metas_excluded: metas_excluded || [],
   timezone: core.getInput("timezone") || "Asia/Shanghai",
 };
 
