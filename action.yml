@@ -13,8 +13,8 @@ inputs:
       - 那么 `database_id=0f3d856498ca4db3b457c5b4eeaxxxxx`
   status_name:
     required: false
-    description: notion database 状态字段的字段名, 支持自定义
-    default: "status"
+    description: notion database 状态字段的字段名, 默认为pstatus, 可修改
+    default: "pstatus"
   status_published:
     required: false
     description: notion database 文章已发布状态的字段值
@@ -36,7 +36,7 @@ inputs:
     description: |
       转换后markdown文件中需要保留的字段, 字段值会同步到Notion中。
       例如abbrlink等字段, 在notion->markdown过程不存在, 但需要hexo等博客自动生成, 且不能变化。
-      多个key请用逗号分隔, 如abbrlink, id.
+      多个key请用逗号分隔, 如abbrlink, id
     default: "abbrlink"
   last_sync_datetime:
     required: false
@@ -85,8 +85,13 @@ inputs:
     default: "{}"
   pic_compress:
     description: |
-      是否开启图片压缩？true为开启, 默认不开启
+      是否开启图片压缩? true为开启, 默认不开启
     default: "false"
+  excluded_metas:
+    default: "ptype, pstatus"
+    description: |
+      Notion转Markdown, 生成页面YAML是需要删除的属性名称, 多个用逗号分隔
+      需要删除的页面属性名称
   timezone: 
     description: 设置的时区
     default: "Asia/Shanghai"

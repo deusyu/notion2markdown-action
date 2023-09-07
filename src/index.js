@@ -40,6 +40,14 @@ if (keys_to_keep && keys_to_keep.trim().length > 0) {
   keys_to_keep = keys_to_keep.split(",").map((key) => key.trim());
 }
 
+var excluded_metas = core.getInput("excluded_metas") || [];
+if(excluded_metas){
+  excluded_metas = excluded_metas.split(',');
+  // use trim to remove space for excluded_metas;
+  excluded_metas = excluded_metas.forEach((v)=>v.trim());
+  excluded_metas = excluded_metas.filter((v)=>v);
+}
+
 let config = {
   notion_secret: core.getInput("notion_secret"),
   database_id: core.getInput("database_id"),
@@ -57,6 +65,7 @@ let config = {
   },
   keys_to_keep: keys_to_keep,
   last_sync_datetime: core.getInput("last_sync_datetime") || null,
+  excluded_metas: excluded_metas || [],
   timezone: core.getInput("timezone") || "Asia/Shanghai",
 };
 

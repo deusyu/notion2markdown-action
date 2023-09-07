@@ -282381,8 +282381,8 @@ let notion = new Client({ auth: config.notion_secret });
 let picgo = new PicGo();
 let n2m = new NotionToMarkdown({ notionClient: notion });
 
-function init(conf) {
-  config = conf;
+function init(cfg) {
+  config = cfg;
   notion = new Client({
     auth: config.notion_secret,
     config: {
@@ -282436,18 +282436,18 @@ async function sync() {
   // query the filename list from the output directory
   let notionPagePropList = await Promise.all(pages.map(async (page) => {
     var properties = await getPropertiesDict(page);
-    switch (properties.type) {
+    switch (properties?.ptype?.toLocaleLowerCase() || "") {
       case "page":
-        if (!properties.filename) {
+        if (!properties?.filename && !properties?.slug) {
           console.error(`Page ${properties.title} has no filename, the page id will be used as the filename.`);
           properties.filename = properties.id;
         }
-        properties.filePath = path.join(config.output_dir.page, properties.filename, 'index.md');
+        properties.filePath = path.join(config.output_dir.page, (properties?.filename || properties?.slug).trim(), 'index.md');
         properties.filename = "index.md";
         break;
       case "post":
       default:
-        properties.filename = properties.filename != undefined && properties.filename ? properties.filename + ".md" : properties.title + ".md";
+        properties.filename = (properties?.filename || properties?.slug || properties?.title || properties.id).trim() + '.md'
         // get the filename and directory of the post, if the filename includes /, then it will be treated as a subdirectory
         properties.filePath = path.join(config.output_dir.post, properties.filename);
         if (properties.filename.includes("/")) {
@@ -282620,6 +282620,14 @@ async function page2Markdown(page, filePath, properties) {
     }
   }
   // remove created_time and last_edited_time from properties
+  if (config?.excluded_metas && config.excluded_metas.length){
+    // delete the key within excluded_metas for properties
+    for(const key of config.excluded_metas){
+      if(key && key in properties) {
+        delete properties[key];
+      }
+    }
+  }
   delete properties.created_time;
   delete properties.last_edited_time;
   let fm = YAML.stringify(properties, { doubleQuotedAsJSON: true });
@@ -282786,7 +282794,7 @@ function getPropVal(data) {
     case "date":
       var mt = moment(val.start);
       if (!mt.isValid()) return val.start;
-      return mt.tz(config.timezone).format('YYYY-MM-DD HH:mm:ss');
+      return config?.timezone ? mt.tz(config.timezone).format('YYYY-MM-DD') : mt.format();
     case "rich_text":
     case "title":
       return val.map((a) => a.plain_text).join("");
@@ -282799,7 +282807,7 @@ function getPropVal(data) {
     case "last_edited_time":
       var mt = moment(val);
       if (!mt.isValid()) return val;
-      return mt.tz(config.timezone).format('YYYY-MM-DD HH:mm:ss');
+      return config?.timezone ? mt.tz(config.timezone).format('YYYY-MM-DD HH:mm:ss') : mt.format();
     default:
       return "";
   }
@@ -305415,6 +305423,14 @@ if (keys_to_keep && keys_to_keep.trim().length > 0) {
   keys_to_keep = keys_to_keep.split(",").map((key) => key.trim());
 }
 
+var excluded_metas = core.getInput("excluded_metas") || [];
+if(excluded_metas){
+  excluded_metas = excluded_metas.split(',');
+  // use trim to remove space for excluded_metas;
+  excluded_metas = excluded_metas.forEach((v)=>v.trim());
+  excluded_metas = excluded_metas.filter((v)=>v);
+}
+
 let config = {
   notion_secret: core.getInput("notion_secret"),
   database_id: core.getInput("database_id"),
@@ -305432,6 +305448,7 @@ let config = {
   },
   keys_to_keep: keys_to_keep,
   last_sync_datetime: core.getInput("last_sync_datetime") || null,
+  excluded_metas: excluded_metas || [],
   timezone: core.getInput("timezone") || "Asia/Shanghai",
 };
 
