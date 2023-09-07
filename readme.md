@@ -271,4 +271,15 @@ jobs:
 ```
 
 
-以上是 `notion2markdown-action` 的详细文档，您可以根据需要自定义输入参数，并将该工作流添加到您的 GitHub 仓库中以自动将 Notion 页面转换为 Markdown 文档。如有任何问题或建议，请随时联系作者。
+## 相关项目
+- [notion-blog-actions](https://github.com/mohuishou/notion-blog-actions) - fork于该项目
+- [notion-to-md](https://github.com/souvikinator/notion-to-md) - 核心模块, Notion转Markdown
+- [notion-sdk-js](https://github.com/makenotion/notion-sdk-js): 核心模块, Notion API
+- [PicGo-Core](https://github.com/PicGo/PicGo-Core): 核心模块, 图床
+
+## 开源协议
+采用[MIT协议](./LICENSE)
+
+## Author
+Dorad, ddxid@outlook.com
+
