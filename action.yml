@@ -94,7 +94,7 @@ inputs:
     default: "false"
   timezone: 
     description: 设置的时区
-    default: "Asia/Shanghai"
+    default: ""
 
 outputs:
   updated_count:

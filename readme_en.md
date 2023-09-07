@@ -107,7 +107,7 @@ Whether to enable image compression. Set to "true" to enable, default is "false.
 
 ### `timezone` (optional)
 
-Set the timezone. Default is "Asia/Shanghai."
+Set the timezone. Default is ""
 
 ## Outputs
 
