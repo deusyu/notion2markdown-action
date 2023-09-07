@@ -461,7 +461,7 @@ function getPropVal(data) {
     case "date":
       var mt = moment(val.start);
       if (!mt.isValid()) return val.start;
-      return config?.timezone ? mt.tz(config.timezone).format('YYYY-MM-DD') : mt.format();
+      return config?.timezone ? mt.tz(config.timezone).format('YYYY-MM-DD HH:mm:ss') : mt.format();
     case "rich_text":
     case "title":
       return val.map((a) => a.plain_text).join("");
