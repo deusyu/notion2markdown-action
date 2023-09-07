@@ -146,7 +146,7 @@ jobs:
         id: NotionSync
         uses: Doradx/notion2markdown-action@v1
         with:
-          notion_secret: ${{ secrets.NOTION_TOKEN }}
+          notion_secret: ${{ secrets.NOTION_SECRET }}
           database_id: ${{ secrets.NOTION_DATABASE_ID }}
           pic_migrate: true
           pic_bed_config: ${{ secrets.PICBED_CONFIG }}
