@@ -146,7 +146,7 @@ jobs:
         id: NotionSync
         uses: Doradx/notion2markdown-action@v1
         with:
-          notion_secret: ${{ secrets.NOTION_TOKEN }}
+          notion_secret: ${{ secrets.NOTION_SECRET }}
           database_id: ${{ secrets.NOTION_DATABASE_ID }}
           pic_migrate: true
           pic_bed_config: ${{ secrets.PICBED_CONFIG }}
@@ -155,7 +155,7 @@ jobs:
           output_post_dir: 'source/_posts/notion'
           clean_unpublished_post: true
           metas_keeped: abbrlink
-					metas_excluded: pstatus,ptype
+          metas_excluded: pstatus,ptype
           last_sync_datetime: ${{ steps.GetNotionSyncDatetime.outputs.NOTION_SYNC_DATETIME }}
       - name: Hexo deploy
         if: steps.NotionSync.outputs.updated_count != '0'
@@ -271,4 +271,15 @@ jobs:
 ```
 
 
-以上是 `notion2markdown-action` 的详细文档，您可以根据需要自定义输入参数，并将该工作流添加到您的 GitHub 仓库中以自动将 Notion 页面转换为 Markdown 文档。如有任何问题或建议，请随时联系作者。
+## 相关项目
+- [notion-blog-actions](https://github.com/mohuishou/notion-blog-actions) - fork于该项目
+- [notion-to-md](https://github.com/souvikinator/notion-to-md) - 核心模块, Notion转Markdown
+- [notion-sdk-js](https://github.com/makenotion/notion-sdk-js): 核心模块, Notion API
+- [PicGo-Core](https://github.com/PicGo/PicGo-Core): 核心模块, 图床
+
+## 开源协议
+采用[MIT协议](./LICENSE)
+
+## Author
+Dorad, ddxid@outlook.com
+
