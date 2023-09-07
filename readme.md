@@ -1,6 +1,6 @@
 # GitHub Actions - notion2markdown-action
 
-[[English]](./readme_en.md) [[简体中文]](./readme.md)
+[[English]](./readme_en.md) [[简体中文]](./readme.md) [[详细介绍]](https://blog.cuger.cn/p/634642fd/?highlight=action)
 
 ## 介绍
 
