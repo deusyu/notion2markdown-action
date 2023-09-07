@@ -1,6 +1,6 @@
 # Notion2Markdown Action
 
-[[English]](./readme_en.md) [[简体中文]](./readme.md)
+[[English]](./readme_en.md) [[简体中文]](./readme.md) [[详细介绍]](https://blog.cuger.cn/p/634642fd/?highlight=action)
 
 This GitHub Action converts pages from a Notion database into Markdown documents. It can be used for static blog generators like Hexo and Hugo. The action also includes PicGo-Core for uploading images to a picBed.
 
