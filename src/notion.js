@@ -138,23 +138,25 @@ async function sync() {
   const localPostFileList = readdirSync(config.output_dir.post);
   var deletedPostList = [];
   for (let i = 0; i < localPostFileList.length; i++) {
-    const file = localPostFileList[i];
-    if (!file.endsWith(".md")) {
+    const localFilename = localPostFileList[i];
+    if (!localFilename.endsWith(".md")) {
       continue;
     }
-    var localProp = loadPropertiesAndContentFromMarkdownFile(path.join(config.output_dir.post, file));
+    var localProp = loadPropertiesAndContentFromMarkdownFile(path.join(config.output_dir.post, localFilename));
     if (!localProp) {
       continue;
     }
     var page = pages.find((page) => {
       return page.id == localProp.id
     });
-    var notionProp = await getPropertiesDict(page);
-    const filename = path.parse(file).name;
-    if (((!page || page == undefined) || !notionProp || (notionProp?.filename == undefined && notionProp?.title !== filename) || (notionProp?.filename && notionProp?.filename !== filename)) && config.output_dir.clean_unpublished_post) {
-      console.debug(`Page is not exists, delete the local file: ${file}`);
-      unlinkSync(path.join(config.output_dir.post, file));
-      deletedPostList.push(file);
+    var notionProp = notionPagePropList.find((prop)=>{
+      return prop.id == localProp.id
+    }) || null;
+    // const filename = path.parse(localFilename).name;
+    if (config.output_dir?.clean_unpublished_post && (!page || !notionProp || localFilename !== notionProp?.filename)){
+      console.debug(`Page is not exists, delete the local file: ${localFilename}`);
+      unlinkSync(path.join(config.output_dir.post, localFilename));
+      deletedPostList.push(localFilename);
       continue;
     }
     // if the page is exists, update the abbrlink of the page if it is empty and the local file has the abbrlink

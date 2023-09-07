@@ -197,12 +197,7 @@ async function bookmark(block) {
         }
     })
         .catch((err) => {
-            if (axios.isAxiosError(err)) {
-                console.warn('Bookmark preview fetch error: ', err.response?.status, err.response?.statusText);
-
-            } else {
-                console.warn('Bookmark preview fetch error: ', err);
-            }
+            console.warn('Bookmark preview fetch error: ', err?.response?.status, err?.response?.statusText);
             return {
                 // title is the domain name
                 title: new URL(bookmark.url).hostname,
@@ -273,16 +268,12 @@ async function video(block) {
                 video_url = `https://v.qq.com/txp/iframe/player.html?vid=${vid}`;
                 break;
             default:
-                console.error("Video block with unsupported domain: ", domain);
+                console.warn("Video block with unsupported domain: ", domain);
                 video_url = url;
         }
     }
     catch (err) {
         console.error("Error parsing video block: ", block);
-        return false;
-    }
-    if (!vid) {
-        console.error("Video block without video id: ", block);
         return false;
     }
     const video_div = `<iframe src="${video_url}" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" style="width: 100%; margin:0; aspect-ratio: 16/9;"> </iframe>`;
