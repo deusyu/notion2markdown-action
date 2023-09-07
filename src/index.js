@@ -42,10 +42,7 @@ if (metas_keeped && metas_keeped.trim().length > 0) {
 
 var metas_excluded = core.getInput("metas_excluded") || [];
 if(metas_excluded){
-  metas_excluded = metas_excluded.split(',');
-  // use trim to remove space for metas_excluded;
-  metas_excluded = metas_excluded.forEach((v)=>v.trim());
-  metas_excluded = metas_excluded.filter((v)=>v);
+  metas_excluded = metas_excluded.split(',').map((v) => v.trim()).filter((v) => v) || [];
 }
 
 let config = {
