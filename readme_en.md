@@ -39,7 +39,7 @@ The solution is mainly divided into three parts:
           output_page_dir: 'source'
           output_post_dir: 'source/_posts/notion'
           clean_unpublished_post: true
-          keys_to_keep: abbrlink
+          metas_keeped: abbrlink,slug
           last_sync_datetime: '2023-09-04T17:21:33+00:00'
 ```
 

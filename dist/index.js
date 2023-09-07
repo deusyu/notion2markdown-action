@@ -282374,7 +282374,7 @@ let config = {
   timezone: "Asia/Shanghai",
   pic_compress: false,
   last_sync_datetime: 0,
-  keys_to_keep: [],
+  metas_keeped: [],
 };
 
 let notion = new Client({ auth: config.notion_secret });
@@ -282493,11 +282493,11 @@ async function sync() {
       continue;
     }
     // if the page is exists, update the abbrlink of the page if it is empty and the local file has the abbrlink
-    // handle the keys_to_keep, to update it
-    if (config.keys_to_keep && config.keys_to_keep.length > 0) {
+    // handle the metas_keeped, to update it
+    if (config.metas_keeped && config.metas_keeped.length > 0) {
       let keysToUpdate = [];
-      for (let i = 0; i < config.keys_to_keep.length; i++) {
-        const key = config.keys_to_keep[i];
+      for (let i = 0; i < config.metas_keeped.length; i++) {
+        const key = config.metas_keeped[i];
         if (localProp[key] && page.properties.hasOwnProperty(key) && !notionProp[key]) {
           page.properties[key].rich_text.push({
             "type": "text",
@@ -282620,9 +282620,9 @@ async function page2Markdown(page, filePath, properties) {
     }
   }
   // remove created_time and last_edited_time from properties
-  if (config?.excluded_metas && config.excluded_metas.length){
-    // delete the key within excluded_metas for properties
-    for(const key of config.excluded_metas){
+  if (config?.metas_excluded && config.metas_excluded.length){
+    // delete the key within metas_excluded for properties
+    for(const key of config.metas_excluded){
       if(key && key in properties) {
         delete properties[key];
       }
@@ -305418,17 +305418,17 @@ if (migrate_image) {
   pic_bed_config = JSON.parse(picBedConfigStr);
 }
 
-var keys_to_keep = core.getInput("keys_to_keep");
-if (keys_to_keep && keys_to_keep.trim().length > 0) {
-  keys_to_keep = keys_to_keep.split(",").map((key) => key.trim());
+var metas_keeped = core.getInput("metas_keeped");
+if (metas_keeped && metas_keeped.trim().length > 0) {
+  metas_keeped = metas_keeped.split(",").map((key) => key.trim());
 }
 
-var excluded_metas = core.getInput("excluded_metas") || [];
-if(excluded_metas){
-  excluded_metas = excluded_metas.split(',');
-  // use trim to remove space for excluded_metas;
-  excluded_metas = excluded_metas.forEach((v)=>v.trim());
-  excluded_metas = excluded_metas.filter((v)=>v);
+var metas_excluded = core.getInput("metas_excluded") || [];
+if(metas_excluded){
+  metas_excluded = metas_excluded.split(',');
+  // use trim to remove space for metas_excluded;
+  metas_excluded = metas_excluded.forEach((v)=>v.trim());
+  metas_excluded = metas_excluded.filter((v)=>v);
 }
 
 let config = {
@@ -305446,9 +305446,9 @@ let config = {
     post: core.getInput("output_post_dir") || "source/_posts/notion/",
     clean_unpublished_post: core.getInput("clean_unpublished_post") === "true" || false,
   },
-  keys_to_keep: keys_to_keep,
+  metas_keeped: metas_keeped,
   last_sync_datetime: core.getInput("last_sync_datetime") || null,
-  excluded_metas: excluded_metas || [],
+  metas_excluded: metas_excluded || [],
   timezone: core.getInput("timezone") || "Asia/Shanghai",
 };
 
