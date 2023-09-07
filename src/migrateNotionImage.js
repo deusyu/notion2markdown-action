@@ -24,7 +24,7 @@ async function migrateNotionImageFromURL(ctx, url) {
   // 检查图片是否为notion的图片
   const urlReg = /^https:\/\/.*?amazonaws\.com\/.+\.(?:jpg|jpeg|bmp|tif|tiff|svg|png|gif|webp)\?.+/;
   if (!urlReg.test(url)) {
-    console.log(`Image ${url} is not a notion image, skip`);
+    // console.log(`Image ${url} is not a notion image, skip`);
     return url;
   }
   // 检查URL对应的图片是否已经存在

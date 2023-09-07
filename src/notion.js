@@ -113,12 +113,11 @@ async function sync() {
         break;
       case "post":
       default:
-        properties.filename = (properties?.filename || properties?.slug || properties?.title || properties.id).trim() + '.md'
+        var filename = (properties?.filename || properties?.slug || properties?.title || properties.id).trim() + '.md'
         // get the filename and directory of the post, if the filename includes /, then it will be treated as a subdirectory
-        properties.filePath = path.join(config.output_dir.post, properties.filename);
-        if (properties.filename.includes("/")) {
-          properties.filename = properties.filename.split("/").pop();
-        }
+        properties.filePath = path.join(config.output_dir.post, filename);
+        if (filename.includes("/")) filename = filename.split("/").pop();
+        properties.filename = filename;
     }
     properties.output_dir = path.dirname(properties.filePath);
     return properties;
@@ -205,7 +204,7 @@ async function sync() {
     let page = pages.find((page) => page.id == prop.id);
     console.debug(`Handle page: ${prop.id}, ${prop.title}`);
     /**
-     * 只处理未发布的文章
+     * 只处理已发布的文章
      */
     // skip the page if it is not exists or published
     if (!page || prop[config.status.name] !== config.status.published) {
