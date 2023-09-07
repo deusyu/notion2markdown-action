@@ -182,7 +182,7 @@ jobs:
           output_post_dir: 'source/_posts/notion'
           clean_unpublished_post: true
           metas_keeped: abbrlink
-					metas_excluded: pstatus,ptype
+          metas_excluded: pstatus,ptype
           last_sync_datetime: ${{ steps.GetNotionSyncDatetime.outputs.NOTION_SYNC_DATETIME }}
       - name: Hexo deploy
         if: steps.NotionSync.outputs.updated_count != '0'
