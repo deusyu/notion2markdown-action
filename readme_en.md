@@ -297,6 +297,15 @@ jobs:
         uses: actions/deploy-pages@v2
 ```
 
+## Related Projects
+- [notion-blog-actions](https://github.com/mohuishou/notion-blog-actions)
+- [notion-to-md](https://github.com/souvikinator/notion-to-md)
+- [notion-sdk-js](https://github.com/makenotion/notion-sdk-js)
+- [PicGo-Core](https://github.com/PicGo/PicGo-Core)
+
 ## License
 
 This action is licensed under the MIT License. See the [LICENSE](https://github.com/Doradx/notion2markdown-action/blob/main/LICENSE) file for details.
+
+## Author
+Dorad, ddxid@outlook.com
