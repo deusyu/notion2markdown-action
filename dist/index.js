@@ -281988,12 +281988,7 @@ async function bookmark(block) {
         }
     })
         .catch((err) => {
-            if (axios.isAxiosError(err)) {
-                console.warn('Bookmark preview fetch error: ', err.response?.status, err.response?.statusText);
-
-            } else {
-                console.warn('Bookmark preview fetch error: ', err);
-            }
+            console.warn('Bookmark preview fetch error: ', err?.response?.status, err?.response?.statusText);
             return {
                 // title is the domain name
                 title: new URL(bookmark.url).hostname,
@@ -282064,16 +282059,12 @@ async function video(block) {
                 video_url = `https://v.qq.com/txp/iframe/player.html?vid=${vid}`;
                 break;
             default:
-                console.error("Video block with unsupported domain: ", domain);
+                console.warn("Video block with unsupported domain: ", domain);
                 video_url = url;
         }
     }
     catch (err) {
         console.error("Error parsing video block: ", block);
-        return false;
-    }
-    if (!vid) {
-        console.error("Video block without video id: ", block);
         return false;
     }
     const video_div = `<iframe src="${video_url}" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" style="width: 100%; margin:0; aspect-ratio: 16/9;"> </iframe>`;
@@ -282472,23 +282463,25 @@ async function sync() {
   const localPostFileList = readdirSync(config.output_dir.post);
   var deletedPostList = [];
   for (let i = 0; i < localPostFileList.length; i++) {
-    const file = localPostFileList[i];
-    if (!file.endsWith(".md")) {
+    const localFilename = localPostFileList[i];
+    if (!localFilename.endsWith(".md")) {
       continue;
     }
-    var localProp = loadPropertiesAndContentFromMarkdownFile(path.join(config.output_dir.post, file));
+    var localProp = loadPropertiesAndContentFromMarkdownFile(path.join(config.output_dir.post, localFilename));
     if (!localProp) {
       continue;
     }
     var page = pages.find((page) => {
       return page.id == localProp.id
     });
-    var notionProp = await getPropertiesDict(page);
-    const filename = path.parse(file).name;
-    if (((!page || page == undefined) || !notionProp || (notionProp?.filename == undefined && notionProp?.title !== filename) || (notionProp?.filename && notionProp?.filename !== filename)) && config.output_dir.clean_unpublished_post) {
-      console.debug(`Page is not exists, delete the local file: ${file}`);
-      unlinkSync(path.join(config.output_dir.post, file));
-      deletedPostList.push(file);
+    var notionProp = notionPagePropList.find((prop)=>{
+      return prop.id == localProp.id
+    }) || null;
+    // const filename = path.parse(localFilename).name;
+    if (config.output_dir?.clean_unpublished_post && (!page || !notionProp || localFilename !== notionProp?.filename)){
+      console.debug(`Page is not exists, delete the local file: ${localFilename}`);
+      unlinkSync(path.join(config.output_dir.post, localFilename));
+      deletedPostList.push(localFilename);
       continue;
     }
     // if the page is exists, update the abbrlink of the page if it is empty and the local file has the abbrlink
