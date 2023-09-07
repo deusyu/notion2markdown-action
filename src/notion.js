@@ -14,8 +14,8 @@ const { NotionToMarkdown } = require("notion-to-md");
 const { parse } = require("twemoji");
 const { getBlockChildren } = require("notion-to-md/build/utils/notion");
 const YAML = require("yaml");
-const { PicGo } = require("picgo");
 const path = require("path");
+const { PicGo } = require("picgo");
 const { migrateNotionImageFromURL } = require("./migrateNotionImage")
 // const Migrater = require("./migrate");
 const { format } = require("prettier");
@@ -44,8 +44,8 @@ let config = {
 };
 
 let notion = new Client({ auth: config.notion_secret });
-let picgo = new PicGo();
 let n2m = new NotionToMarkdown({ notionClient: notion });
+let picgo = new PicGo();
 
 function init(cfg) {
   config = cfg;

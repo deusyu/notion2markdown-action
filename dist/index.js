@@ -282339,8 +282339,8 @@ const { NotionToMarkdown } = __nccwpck_require__(11245);
 const { parse } = __nccwpck_require__(40790);
 const { getBlockChildren } = __nccwpck_require__(86588);
 const YAML = __nccwpck_require__(37136);
-const { PicGo } = __nccwpck_require__(13272);
 const path = __nccwpck_require__(71017);
+const { PicGo } = __nccwpck_require__(13272);
 const { migrateNotionImageFromURL } = __nccwpck_require__(43805)
 // const Migrater = require("./migrate");
 const { format } = __nccwpck_require__(16792);
@@ -282369,8 +282369,8 @@ let config = {
 };
 
 let notion = new Client({ auth: config.notion_secret });
-let picgo = new PicGo();
 let n2m = new NotionToMarkdown({ notionClient: notion });
+let picgo = new PicGo();
 
 function init(cfg) {
   config = cfg;
@@ -305438,7 +305438,7 @@ let config = {
   metas_keeped: metas_keeped,
   last_sync_datetime: core.getInput("last_sync_datetime") || null,
   metas_excluded: metas_excluded || [],
-  timezone: core.getInput("timezone") || "Asia/Shanghai",
+  timezone: core.getInput("timezone") || "",
 };
 
 // add current running file dir to PATH

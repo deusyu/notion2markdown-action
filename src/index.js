@@ -63,7 +63,7 @@ let config = {
   metas_keeped: metas_keeped,
   last_sync_datetime: core.getInput("last_sync_datetime") || null,
   metas_excluded: metas_excluded || [],
-  timezone: core.getInput("timezone") || "Asia/Shanghai",
+  timezone: core.getInput("timezone") || "",
 };
 
 // add current running file dir to PATH
