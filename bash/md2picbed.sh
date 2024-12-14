@@ -94,7 +94,7 @@ getURLfromMD() {
     pattern_local='!\[.*?\]\(((?!http|ftp|mailto|data:)[^\)]+)\)'
     pattern_internet='!\[.*?\]\((https?:\/\/.*?)\)'
     # 匹配notion平台的临时图片链接
-    pattern_notion='(https://.*?/secure\.notion-static\.com\/.+\.(?:jpg|jpeg|png|gif|webp)\?.+)'
+    pattern_notion='(https://.*?/secure\.notion-static\.com\/.+\.(?:jpg|jpeg|png|gif|webp|mp4)\?.+)'
     # 根据各个pattern提取图片链接
     # local_image_urls=($(grep -oP $pattern_local $filename | sed -E 's/'$pattern_local'/\1/'))
     local_image_urls=($(grep -oP $pattern_local $filename | sed -E 's/.*\((.*)\).*/\1/'))
@@ -115,25 +115,23 @@ getURLfromMD() {
 
 # 撰写一个函数，用于将网络图片下载到本地，参数为网络图片链接，返回值为本地图片路径
 downloadImage() {
-    # 获取图片链接
-    image_url=$1
-    # 获取保存图片的目录，如果目录不存在则创建
+    # 获取文件链接
+    file_url=$1
+    # 保存目录
     tdir=$2
-    if [ ! -d $tdir ]; then
-        mkdir -p $tdir
-    fi
-    # 创建一个临时文件，用于保存图片
+    [ ! -d "$tdir" ] && mkdir -p "$tdir"
+    # 创建临时文件
     temp_file=$(mktemp)
-    # 用wget下载图片到临时目录，带上伪装的user-agent，根据下载得到的文件，自动检测图片类型，将图片重命名为md5值
-    if wget -U "Mozilla/5.0 (X11; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0" -O $temp_file "$image_url" &>/dev/null; then
-        # 使用identify命令获取图片的类型, 并将其重命名为md5值
-        image_name=$(hashname $temp_file)
-        image_path=$tdir/$image_name
-        mv $temp_file $image_path
-        # echo "下载图片 $image_path 成功"
-        echo $image_path
+    # 下载文件
+    if wget -U "Mozilla/5.0" -O "$temp_file" "$file_url" &>/dev/null; then
+        # 获取文件扩展名
+        extension="${file_url##*.}"
+        # 生成哈希文件名并添加扩展名
+        file_name="$(hashname "$temp_file").$extension"
+        file_path="$tdir/$file_name"
+        mv "$temp_file" "$file_path"
+        echo "$file_path"
     else
-        # echo "下载图片 $image_url 失败"
         echo ""
     fi
 }
