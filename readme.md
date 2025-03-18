@@ -281,5 +281,8 @@ jobs:
 采用[MIT协议](./LICENSE)
 
 ## Author
-Dorad, ddxid@outlook.com
+deusyu
+
+## Great Thanks
+Dorad https://github.com/Doradx/notion2markdown-action
 
