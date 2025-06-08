@@ -1,7 +1,7 @@
 {
   "name": "notion2markdown-action",
   "version": "0.7.5",
-  "description": "",
+  "description": "将 Notion 数据库中的页面转换为 Markdown 文档，支持 Hexo、Hugo 等静态博客构建，内置 PicGo-Core 图床上传功能",
   "main": "index.js",
   "scripts": {
     "test": "node test/test.js",
@@ -11,8 +11,25 @@
     "test:config": "node test/config-validator.js",
     "build": "ncc build src/index.js -o dist/"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "deusyu <daniel@deusyu.app>",
+  "contributors": [
+    "Dorad <https://github.com/Doradx> (Original author)"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/deusyu/notion2markdown-action.git"
+  },
+  "homepage": "https://github.com/deusyu/notion2markdown-action",
+  "keywords": [
+    "notion",
+    "markdown",
+    "hexo",
+    "hugo",
+    "blog",
+    "github-actions",
+    "picgo"
+  ],
   "dependencies": {
     "@actions/core": "^1.10.0",
     "@actions/exec": "^1.1.0",
