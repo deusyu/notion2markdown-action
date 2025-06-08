@@ -244,6 +244,12 @@ jobs:
 ```
 </details>
 
+## 📚 文档
+
+- 📋 [安装配置指南](./docs/SETUP.md) - 详细的安装和配置步骤
+- ❓ [常见问题](./docs/FAQ.md) - 疑难问题解答
+- 🤝 [贡献指南](./docs/CONTRIBUTING.md) - 开发环境配置和测试指南
+
 ## 📝 更新日志
 
 查看 [CHANGELOG.md](./CHANGELOG.md) 了解详细更新记录。

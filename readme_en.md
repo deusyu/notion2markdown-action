@@ -244,6 +244,12 @@ jobs:
 ```
 </details>
 
+## 📚 Documentation
+
+- 📋 [Setup Guide](./docs/SETUP.md) - Detailed installation and configuration
+- ❓ [FAQ](./docs/FAQ.md) - Frequently asked questions  
+- 🤝 [Contributing](./docs/CONTRIBUTING.md) - Development environment and testing guide
+
 ## 📝 Changelog
 
 See [CHANGELOG.md](./CHANGELOG.md) for detailed release notes.
