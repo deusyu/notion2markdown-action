@@ -229,8 +229,23 @@ async function bookmark(block) {
 async function pdf(block) {
     const { pdf } = block || {};
     if (!pdf) return false;
-    const url = getUrlFromFileOrExternalBlock(pdf, 'pdf');
+    let url = getUrlFromFileOrExternalBlock(pdf, 'pdf');
     if (!url) return false;
+    
+    // 📄 新增：如果配置了图片迁移，且URL是Notion文件，先进行迁移
+    const { migrateNotionImageFromURL } = require('./migrateNotionImage');
+    if (global.picgo && global.config?.migrate_image) {
+        try {
+            const migratedUrl = await migrateNotionImageFromURL(global.picgo, url);
+            if (migratedUrl && migratedUrl !== url) {
+                url = migratedUrl;
+                console.log(`PDF URL migrated: ${url.substring(0, 60)}...`);
+            }
+        } catch (error) {
+            console.warn(`PDF migration failed, using original URL: ${error.message}`);
+        }
+    }
+    
     var caption = pdf.caption && pdf.caption.length > 0 ? pdf.caption[0].plain_text : "";
     var iframe = `<iframe src="${url}" style="width: 100%; margin:0; aspect-ratio: 16/9;"></iframe>`;
     const caption_div = caption ? CAPTION_DIV_TEMPLATE.replace("{{caption}}", caption) : "";
@@ -240,8 +255,23 @@ async function pdf(block) {
 async function audio(block) {
     const { audio } = block;
     if (!audio) return false;
-    const url = getUrlFromFileOrExternalBlock(audio, 'audio');
+    let url = getUrlFromFileOrExternalBlock(audio, 'audio');
     if (!url) return false;
+    
+    // 🎵 新增：如果配置了图片迁移，且URL是Notion文件，先进行迁移
+    const { migrateNotionImageFromURL } = require('./migrateNotionImage');
+    if (global.picgo && global.config?.migrate_image) {
+        try {
+            const migratedUrl = await migrateNotionImageFromURL(global.picgo, url);
+            if (migratedUrl && migratedUrl !== url) {
+                url = migratedUrl;
+                console.log(`Audio URL migrated: ${url.substring(0, 60)}...`);
+            }
+        } catch (error) {
+            console.warn(`Audio migration failed, using original URL: ${error.message}`);
+        }
+    }
+    
     const caption = audio.caption && audio.caption.length ? audio.caption[0].plain_text : "";
     var audio_div = `<audio controls style="width: 100%; height: 54px;margin:0;"><source src="${url}" type="audio/mpeg"></audio>`;
     var caption_div = caption ? CAPTION_DIV_TEMPLATE.replace("{{caption}}", caption) : "";
@@ -251,8 +281,23 @@ async function audio(block) {
 async function video(block) {
     const { video } = block;
     if (!video) return false;
-    const url = getUrlFromFileOrExternalBlock(video, 'video');
+    let url = getUrlFromFileOrExternalBlock(video, 'video');
     if (!url) return false;
+    
+    // 🎬 新增：如果配置了图片迁移，且URL是Notion文件，先进行迁移
+    const { migrateNotionImageFromURL } = require('./migrateNotionImage');
+    if (global.picgo && global.config?.migrate_image) {
+        try {
+            const migratedUrl = await migrateNotionImageFromURL(global.picgo, url);
+            if (migratedUrl && migratedUrl !== url) {
+                url = migratedUrl;
+                console.log(`Video URL migrated: ${url.substring(0, 60)}...`);
+            }
+        } catch (error) {
+            console.warn(`Video migration failed, using original URL: ${error.message}`);
+        }
+    }
+    
     var caption = video.caption && video.caption.length > 0 ? video.caption[0].plain_text : "";
     // fetch the iframe url
     const domain = new URL(url).hostname;

@@ -78,6 +78,10 @@ function init(cfg) {
     'settings.logLevel': ['success', 'error', 'warn']
   })
 
+  // 🎬 设置全局变量，让video transformer能访问到picgo和config
+  global.picgo = picgo;
+  global.config = config;
+
   // passing notion client to the option
   n2m = new NotionToMarkdown({ notionClient: notion });
   n2m.setCustomTransformer("callout", callout(n2m));

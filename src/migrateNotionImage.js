@@ -21,10 +21,30 @@ const imageminSvgo = require("imagemin-svgo");
 
 
 async function migrateNotionImageFromURL(ctx, url) {
-  // 检查图片是否为notion的图片
-  const urlReg = /^https:\/\/.*?amazonaws\.com\/.+\.(?:jpg|jpeg|bmp|tif|tiff|svg|png|gif|webp|mp4|mov|avi|wmv|flv|mkv)\?.+/;
-  if (!urlReg.test(url)) {
-    // console.log(`Image ${url} is not a notion image, skip`);
+  // 🧠 智能检查：基于AWS签名参数识别Notion文件，不依赖硬编码域名
+  function isNotionFile(url) {
+    try {
+      const urlObj = new URL(url);
+      const params = urlObj.searchParams;
+      
+      // 检查是否为AWS S3临时签名URL (Notion使用的方式)
+      const hasAwsSignature = params.has('X-Amz-Algorithm') && 
+                             params.has('X-Amz-Credential') && 
+                             params.has('X-Amz-Date') && 
+                             params.has('X-Amz-Signature');
+      
+      if (!hasAwsSignature) return false;
+      
+      // 检查是否为媒体文件
+      const mediaExtensions = /\.(jpg|jpeg|bmp|tif|tiff|svg|png|gif|webp|mp4|mov|avi|wmv|flv|mkv|mp3|wav|ogg|aac|m4a|pdf)(\?|$)/i;
+      return mediaExtensions.test(url);
+    } catch {
+      return false;
+    }
+  }
+  
+  if (!isNotionFile(url)) {
+    // console.log(`Media ${url} is not a notion media file, skip`);
     return url;
   }
   // 检查URL对应的图片是否已经存在
