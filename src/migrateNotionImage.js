@@ -22,7 +22,7 @@ const imageminSvgo = require("imagemin-svgo");
 
 async function migrateNotionImageFromURL(ctx, url) {
   // 检查图片是否为notion的图片
-  const urlReg = /^https:\/\/.*?amazonaws\.com\/.+\.(?:jpg|jpeg|bmp|tif|tiff|svg|png|gif|webp)\?.+/;
+  const urlReg = /^https:\/\/.*?amazonaws\.com\/.+\.(?:jpg|jpeg|bmp|tif|tiff|svg|png|gif|webp|mp4|mov|avi|wmv|flv|mkv)\?.+/;
   if (!urlReg.test(url)) {
     // console.log(`Image ${url} is not a notion image, skip`);
     return url;

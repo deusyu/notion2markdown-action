@@ -3,3 +3,24 @@ output/
 config.json
 .vscode
 source
+
+# 本地测试配置和输出
+test.config.local.js
+test-output/
+*.log
+
+# 测试文件和临时文件
+test-*.js
+test-*.sh
+test-*.txt
+test-*.md
+*_TEST_*.md
+FINAL_CONFIG_SUMMARY.md
+S3_TEST_RESULT.md
+
+# 系统文件
+.DS_Store
+.history/
+
+# AWS/R2 配置文件
+r2test
