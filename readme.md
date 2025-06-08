@@ -107,7 +107,7 @@ jobs:
 
       - name: Convert Notion to Markdown
         id: notion2markdown
-        uses: Doradx/notion2markdown-action@v1
+        uses: deusyu/notion2markdown-action@main
         with:
           notion_secret: ${{ secrets.NOTION_SECRET }}
           database_id: "0f3d856498ca4db3b457c5b4eeaxxxxx"
@@ -142,21 +142,21 @@ jobs:
           NOTION_SYNC_DATETIME=$(git log -n 1 --grep="NotionSync" --format="%aI")
           echo "NOTION_SYNC_DATETIME=$NOTION_SYNC_DATETIME" >> "$GITHUB_OUTPUT"
           echo -e "Latest notion sync datetime:\n$NOTION_SYNC_DATETIME"
-      - name: Convert notion to markdown
-        id: NotionSync
-        uses: Doradx/notion2markdown-action@v1
-        with:
-          notion_secret: ${{ secrets.NOTION_SECRET }}
-          database_id: ${{ secrets.NOTION_DATABASE_ID }}
-          pic_migrate: true
-          pic_bed_config: ${{ secrets.PICBED_CONFIG }}
-          pic_compress: true
-          output_page_dir: 'source'
-          output_post_dir: 'source/_posts/notion'
-          clean_unpublished_post: true
-          metas_keeped: abbrlink
-          metas_excluded: pstatus,ptype
-          last_sync_datetime: ${{ steps.GetNotionSyncDatetime.outputs.NOTION_SYNC_DATETIME }}
+            - name: Convert notion to markdown
+        id: NotionSync
+        uses: deusyu/notion2markdown-action@main
+        with:
+          notion_secret: ${{ secrets.NOTION_SECRET }}
+          database_id: ${{ secrets.NOTION_DATABASE_ID }}
+          pic_migrate: true
+          pic_bed_config: ${{ secrets.PICBED_CONFIG }}
+          pic_compress: true
+          output_page_dir: 'source'
+          output_post_dir: 'source/_posts/notion'
+          clean_unpublished_post: true
+          metas_keeped: abbrlink
+          metas_excluded: pstatus,ptype
+          last_sync_datetime: ${{ steps.GetNotionSyncDatetime.outputs.NOTION_SYNC_DATETIME }}
       - name: Hexo deploy
         if: steps.NotionSync.outputs.updated_count != '0'
         run: |
@@ -199,21 +199,21 @@ jobs:
           NOTION_SYNC_DATETIME=$(git log -n 1 --grep="NotionSync" --format="%aI")
           echo "NOTION_SYNC_DATETIME=$NOTION_SYNC_DATETIME" >> "$GITHUB_OUTPUT"
           echo -e "Latest notion sync datetime:\n$NOTION_SYNC_DATETIME"
-      - name: Convert notion to markdown
-        id: NotionSync
-        uses: Doradx/notion2markdown-action@v1
-        with:
-          notion_secret: ${{ secrets.NOTION_SECRET }}
-          database_id: ${{ secrets.NOTION_DATABASE_ID }}
-          pic_migrate: true
-          pic_bed_config: ${{ secrets.PICBED_CONFIG }}
-          pic_compress: true
-          output_page_dir: 'content/pages'
-          output_post_dir: 'content/posts'
-          clean_unpublished_post: true
-          metas_keeped: slug
-          metas_excluded: pstatus, ptype
-          last_sync_datetime: ${{ steps.GetNotionSyncDatetime.outputs.NOTION_SYNC_DATETIME }}
+            - name: Convert notion to markdown
+        id: NotionSync
+        uses: deusyu/notion2markdown-action@main
+        with:
+          notion_secret: ${{ secrets.NOTION_SECRET }}
+          database_id: ${{ secrets.NOTION_DATABASE_ID }}
+          pic_migrate: true
+          pic_bed_config: ${{ secrets.PICBED_CONFIG }}
+          pic_compress: true
+          output_page_dir: 'content/pages'
+          output_post_dir: 'content/posts'
+          clean_unpublished_post: true
+          metas_keeped: slug
+          metas_excluded: pstatus, ptype
+          last_sync_datetime: ${{ steps.GetNotionSyncDatetime.outputs.NOTION_SYNC_DATETIME }}
       - name: Commit & Push
         if: steps.NotionSync.outputs.updated_count != '0'
         uses: stefanzweifel/git-auto-commit-action@v4
@@ -272,17 +272,20 @@ jobs:
 
 
 ## 相关项目
-- [notion-blog-actions](https://github.com/mohuishou/notion-blog-actions) - fork于该项目
 - [notion-to-md](https://github.com/souvikinator/notion-to-md) - 核心模块, Notion转Markdown
-- [notion-sdk-js](https://github.com/makenotion/notion-sdk-js): 核心模块, Notion API
-- [PicGo-Core](https://github.com/PicGo/PicGo-Core): 核心模块, 图床
+- [notion-sdk-js](https://github.com/makenotion/notion-sdk-js) - 核心模块, Notion API
+- [PicGo-Core](https://github.com/PicGo/PicGo-Core) - 核心模块, 图床上传
+- [notion-blog-actions](https://github.com/mohuishou/notion-blog-actions) - 项目灵感来源
 
 ## 开源协议
 采用[MIT协议](./LICENSE)
 
-## Author
-deusyu
+## 作者
+**deusyu** - *项目维护与功能扩展*
+- Email: daniel@deusyu.app
+- GitHub: [@deusyu](https://github.com/deusyu)
 
-## Great Thanks
-Dorad https://github.com/Doradx/notion2markdown-action
+## 致谢
+- **Dorad** - *原始项目作者* - [notion2markdown-action](https://github.com/Doradx/notion2markdown-action)
+- 所有为开源社区贡献的开发者们
 

@@ -134,7 +134,7 @@ jobs:
 
       - name: Convert Notion to Markdown
         id: notion2markdown
-        uses: Doradx/notion2markdown-action@v1
+        uses: deusyu/notion2markdown-action@main
         with:
           notion_secret: ${{ secrets.NOTION_SECRET }}
           database_id: "0f3d856498ca4db3b457c5b4eeaxxxxx"
@@ -169,17 +169,17 @@ jobs:
           NOTION_SYNC_DATETIME=$(git log -n 1 --grep="NotionSync" --format="%aI")
           echo "NOTION_SYNC_DATETIME=$NOTION_SYNC_DATETIME" >> "$GITHUB_OUTPUT"
           echo -e "Latest notion sync datetime:\n$NOTION_SYNC_DATETIME"
-      - name: Convert notion to markdown
-        id: NotionSync
-        uses: Doradx/notion2markdown-action@v1
-        with:
-          notion_secret: ${{ secrets.NOTION_SECRET }}
-          database_id: ${{ secrets.NOTION_DATABASE_ID }}
-          pic_migrate: true
-          pic_bed_config: ${{ secrets.PICBED_CONFIG }}
-          pic_compress: true
-          output_page_dir: 'source'
-          output_post_dir: 'source/_posts/notion'
+            - name: Convert notion to markdown
+        id: NotionSync
+        uses: deusyu/notion2markdown-action@main
+        with:
+          notion_secret: ${{ secrets.NOTION_SECRET }}
+          database_id: ${{ secrets.NOTION_DATABASE_ID }}
+          pic_migrate: true
+          pic_bed_config: ${{ secrets.PICBED_CONFIG }}
+          pic_compress: true
+          output_page_dir: 'source'
+          output_post_dir: 'source/_posts/notion'
           clean_unpublished_post: true
           metas_keeped: abbrlink
           metas_excluded: pstatus,ptype
@@ -226,17 +226,17 @@ jobs:
           NOTION_SYNC_DATETIME=$(git log -n 1 --grep="NotionSync" --format="%aI")
           echo "NOTION_SYNC_DATETIME=$NOTION_SYNC_DATETIME" >> "$GITHUB_OUTPUT"
           echo -e "Latest notion sync datetime:\n$NOTION_SYNC_DATETIME"
-      - name: Convert notion to markdown
-        id: NotionSync
-        uses: Doradx/notion2markdown-action@v1
-        with:
-          notion_secret: ${{ secrets.NOTION_SECRET }}
-          database_id: ${{ secrets.NOTION_DATABASE_ID }}
-          pic_migrate: true
-          pic_bed_config: ${{ secrets.PICBED_CONFIG }}
-          pic_compress: true
-          output_page_dir: 'content/pages'
-          output_post_dir: 'content/posts'
+            - name: Convert notion to markdown
+        id: NotionSync
+        uses: deusyu/notion2markdown-action@main
+        with:
+          notion_secret: ${{ secrets.NOTION_SECRET }}
+          database_id: ${{ secrets.NOTION_DATABASE_ID }}
+          pic_migrate: true
+          pic_bed_config: ${{ secrets.PICBED_CONFIG }}
+          pic_compress: true
+          output_page_dir: 'content/pages'
+          output_post_dir: 'content/posts'
           clean_unpublished_post: true
           metas_keeped: slug
           metas_excluded: pstatus, ptype
@@ -298,17 +298,20 @@ jobs:
 ```
 
 ## Related Projects
-- [notion-blog-actions](https://github.com/mohuishou/notion-blog-actions)
-- [notion-to-md](https://github.com/souvikinator/notion-to-md)
-- [notion-sdk-js](https://github.com/makenotion/notion-sdk-js)
-- [PicGo-Core](https://github.com/PicGo/PicGo-Core)
+- [notion-to-md](https://github.com/souvikinator/notion-to-md) - Core module for Notion to Markdown conversion
+- [notion-sdk-js](https://github.com/makenotion/notion-sdk-js) - Core module for Notion API
+- [PicGo-Core](https://github.com/PicGo/PicGo-Core) - Core module for image hosting
+- [notion-blog-actions](https://github.com/mohuishou/notion-blog-actions) - Project inspiration
 
 ## License
 
-This action is licensed under the MIT License. See the [LICENSE](https://github.com/Doradx/notion2markdown-action/blob/main/LICENSE) file for details.
+This action is licensed under the MIT License. See the [LICENSE](https://github.com/deusyu/notion2markdown-action/blob/main/LICENSE) file for details.
 
 ## Author
-deusyu
+**deusyu** - *Project maintenance and feature enhancement*
+- Email: daniel@deusyu.app  
+- GitHub: [@deusyu](https://github.com/deusyu)
 
-## Great Thanks
-Dorad https://github.com/Doradx/notion2markdown-action
+## Acknowledgments
+- **Dorad** - *Original project author* - [notion2markdown-action](https://github.com/Doradx/notion2markdown-action)
+- All developers contributing to the open source community
