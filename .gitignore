@@ -1,15 +1,28 @@
-node_modules
-output/
-config.json
-.vscode
-source
+# Dependencies
+node_modules/
 
-# 本地测试配置和输出
+# Build outputs
+dist/
+output/
+
+# Environment files
+.env*
+config.json
+
+# IDE
+.vscode/
+.idea/
+
+# Local test config and outputs
 test.config.local.js
 test-output/
-*.log
+source/
 
-# 测试文件和临时文件
+# Logs
+*.log
+npm-debug.log*
+
+# Test files and temporary files
 test-*.js
 test-*.sh
 test-*.txt
@@ -18,9 +31,10 @@ test-*.md
 FINAL_CONFIG_SUMMARY.md
 S3_TEST_RESULT.md
 
-# 系统文件
+# System files
 .DS_Store
 .history/
+Thumbs.db
 
-# AWS/R2 配置文件
+# AWS/R2 config files
 r2test

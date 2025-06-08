@@ -21,6 +21,12 @@
     "url": "https://github.com/deusyu/notion2markdown-action.git"
   },
   "homepage": "https://github.com/deusyu/notion2markdown-action",
+  "bugs": {
+    "url": "https://github.com/deusyu/notion2markdown-action/issues"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "keywords": [
     "notion",
     "markdown",
