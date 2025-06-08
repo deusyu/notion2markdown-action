@@ -66,9 +66,13 @@ async function migrateNotionImageFromURL(ctx, url) {
   try {
     // 从URL获取图片信息
     let imageItem = await handlePicFromURL(ctx, url);
-    // 检查是否需要压缩图片
-    if (ctx.getConfig('compress') && ext !== 'svg') {
-      // 压缩图片
+    // 检查是否需要压缩图片 (只对图片文件压缩，不压缩视频)
+    const videoExtensions = ['mp4', 'mov', 'avi', 'wmv', 'flv', 'mkv'];
+    const audioExtensions = ['mp3', 'wav', 'ogg', 'aac', 'm4a'];
+    const isMediaFile = videoExtensions.includes(ext) || audioExtensions.includes(ext);
+    
+    if (ctx.getConfig('compress') && ext !== 'svg' && !isMediaFile) {
+      // 只压缩图片文件
       imageItem = await compressPic(imageItem);
     }
     imageItem.fileName = `${uuid}.${ext}`;
@@ -101,7 +105,7 @@ async function checkPicExist(ctx, picUrl) {
   }
 }
 
-// 从URL获取图片信息
+// 从URL获取媒体文件信息 (支持图片和视频)
 async function handlePicFromURL(ctx, url) {
   try {
     if (url.includes("data:image/svg+xml")) {
@@ -119,17 +123,40 @@ async function handlePicFromURL(ctx, url) {
       responseType: "arraybuffer",
     })
     const fileName = path.basename(url).split('?')[0].split('#')[0]
-    const imgSize = getImageSize(buffer)
-    return {
-      buffer,
-      fileName,
-      width: imgSize.width,
-      height: imgSize.height,
-      extname: `.${imgSize.type || 'png'}`,
-      origin: url
+    
+    // 🎬 从URL提取真实的文件扩展名，而不是依赖image-size
+    let realExt = url.split('?')[0].split('.').pop()?.toLowerCase();
+    realExt = realExt === 'jpeg' ? 'jpg' : realExt;
+    realExt = realExt === 'tiff' ? 'tif' : realExt;
+    
+    // 检查是否为视频文件
+    const videoExtensions = ['mp4', 'mov', 'avi', 'wmv', 'flv', 'mkv'];
+    const audioExtensions = ['mp3', 'wav', 'ogg', 'aac', 'm4a'];
+    
+    if (videoExtensions.includes(realExt) || audioExtensions.includes(realExt)) {
+      // 视频/音频文件：不使用image-size，直接返回
+      return {
+        buffer,
+        fileName,
+        width: 1920,  // 默认视频尺寸
+        height: 1080,
+        extname: `.${realExt}`,
+        origin: url
+      }
+    } else {
+      // 图片文件：使用image-size获取尺寸
+      const imgSize = getImageSize(buffer)
+      return {
+        buffer,
+        fileName,
+        width: imgSize.width,
+        height: imgSize.height,
+        extname: `.${imgSize.type || realExt || 'png'}`,
+        origin: url
+      }
     }
   } catch (e) {
-    this.ctx.log.error(`handle pic from url ${url} fail: ${JSON.stringify(e)}`)
+    ctx.log.error(`handle media from url ${url} fail: ${JSON.stringify(e)}`)
     return undefined
   }
 }
