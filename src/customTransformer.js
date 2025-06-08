@@ -18,16 +18,23 @@ function capitalizeFirstLetter(str) {
 }
 
 function getUrlFromFileOrExternalBlock(block, embed_type = "audio") {
-    type = capitalizeFirstLetter(embed_type.toLowerCase());
+    const type = capitalizeFirstLetter(embed_type.toLowerCase());
     if (!block) {
         console.error(`${type} block is null: `, block);
         return false;
     }
+    
+    // Handle different block structures
     if (block.type === "file" && block.file?.url) {
         console.warn(`${type} block with file type: ${block.type}, it's a temporary link which will expire soon.`);
         return block.file?.url;
-    } else if (block.type === "external" && block.external.url) {
+    } else if (block.type === "external" && block.external?.url) {
         return block.external?.url;
+    } else if (block.type === "video" && block.video?.url) {
+        return block.video?.url;
+    } else if (block.url) {
+        // Direct URL case (for video/audio/pdf objects that have url directly)
+        return block.url;
     } else {
         console.error(`${type} block with unsupported type: `, block.type);
         return false;
@@ -243,6 +250,7 @@ async function audio(block) {
 
 async function video(block) {
     const { video } = block;
+    if (!video) return false;
     const url = getUrlFromFileOrExternalBlock(video, 'video');
     if (!url) return false;
     var caption = video.caption && video.caption.length > 0 ? video.caption[0].plain_text : "";
@@ -357,5 +365,6 @@ module.exports = {
     audio,
     embed,
     pdf,
-    image
+    image,
+    getUrlFromFileOrExternalBlock
 }

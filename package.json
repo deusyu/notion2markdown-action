@@ -5,6 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "node test/test.js",
+    "test:video": "node test/video-only.test.js",
+    "test:local": "node test/local.test.js", 
+    "test:incremental": "node test/incremental.test.js",
+    "test:config": "node test/config-validator.js",
     "build": "ncc build src/index.js -o dist/"
   },
   "author": "",

@@ -255,25 +255,25 @@ async function page2Markdown(page, filePath, properties) {
   let md = n2m.toMarkdownString(mdblocks).parent;
   // 将图床上传和URL替换放到这里，避免后续对于MD文件的二次处理.
   if (config.migrate_image) {
-    // 处理内容图片
-    // find all image url inside markdown.
-    const imgItems = md.match(/!\[.*\]\(([^)]+\.(?:jpg|jpeg|png|gif|bmp|svg|webp).*?)\)/g);
-    if (!imgItems || imgItems.length == 0) {
-      console.debug(`No image url found in the markdown file: ${filePath}`);
+    // 处理内容图片和视频
+    // find all image and video url inside markdown.
+    const mediaItems = md.match(/!\[.*\]\(([^)]+\.(?:jpg|jpeg|png|gif|bmp|svg|webp|mp4|mov|avi|wmv|flv|mkv).*?)\)/g);
+    if (!mediaItems || mediaItems.length == 0) {
+      console.debug(`No media url found in the markdown file: ${filePath}`);
     } else {
-      // 对于所有的图片url，进行并行处理
-      const newImageItems = await Promise.all(imgItems.map(async (item) => {
-        const mdImageReg = /!\[([^[\]]*)]\(([^)]+)\)/;
-        if (!mdImageReg.test(item)) return [item, item];
-        const match = mdImageReg.exec(item);
-        const newPicUrl = await migrateNotionImageFromURL(picgo, match[2]);
-        if (newPicUrl) {
-          return [item, `![${match[1]}](${newPicUrl})`]
+      // 对于所有的媒体url，进行并行处理
+      const newMediaItems = await Promise.all(mediaItems.map(async (item) => {
+        const mdMediaReg = /!\[([^[\]]*)]\(([^)]+)\)/;
+        if (!mdMediaReg.test(item)) return [item, item];
+        const match = mdMediaReg.exec(item);
+        const newMediaUrl = await migrateNotionImageFromURL(picgo, match[2]);
+        if (newMediaUrl) {
+          return [item, `![${match[1]}](${newMediaUrl})`]
         }
         return [item, item];
       }));
-      // 替换所有的图片url
-      newImageItems.forEach((item) => {
+      // 替换所有的媒体url
+      newMediaItems.forEach((item) => {
         md = md.replace(item[0], item[1]);
       });
     }
