@@ -92,6 +92,7 @@ function init(cfg) {
   n2m.setCustomTransformer("pdf", t.pdf);
   n2m.setCustomTransformer("audio", t.audio);
   n2m.setCustomTransformer("image", t.image);
+  n2m.setCustomTransformer("code", codeBlock);
 }
 
 async function sync() {
@@ -452,6 +453,25 @@ function icon2md(icon) {
       return `<img src="${icon.external.url}" width="25px" />\n`;
   }
   return "";
+}
+
+/**
+ * 自定义代码块转换器，防止 rich_text 为空时出错
+ * @param {*} block 
+ * @returns 
+ */
+function codeBlock(block) {
+  const { code } = block;
+  if (!code) return "";
+  
+  // 安全地获取代码内容，处理 rich_text 可能为 undefined 的情况
+  const codeContent = code.rich_text && Array.isArray(code.rich_text) 
+    ? code.rich_text.map((t) => t.plain_text).join("\n")
+    : "";
+  
+  const language = code.language || "";
+  
+  return `\`\`\`${language}\n${codeContent}\n\`\`\``;
 }
 
 function getPropVal(data) {
