@@ -462,42 +462,68 @@ function icon2md(icon) {
  */
 function codeBlock(block) {
   const { code } = block;
-  if (!code) return "";
+  if (!code) {
+    console.error(`[MERMAID-DEBUG] code对象为空或undefined`);
+    return "";
+  }
   
   let codeContent = "";
   const language = code.language || "";
   
-  console.log(`DEBUG: codeBlock - 语言=${language}, code对象:`, JSON.stringify(code, null, 2));
+  // 使用console.error确保在GitHub Actions中能看到调试信息
+  console.error(`[MERMAID-DEBUG] 开始处理代码块 - 语言=${language}`);
+  console.error(`[MERMAID-DEBUG] code对象完整结构:`, JSON.stringify(code, null, 2));
+  
+  // 特别标记mermaid代码块
+  if (language === 'mermaid') {
+    console.error(`[MERMAID-DEBUG] ⭐ 检测到mermaid代码块！`);
+  }
   
   // 尝试从多个可能的字段获取代码内容
   if (code.rich_text && Array.isArray(code.rich_text) && code.rich_text.length > 0) {
     // 方式1：从rich_text字段获取（标准情况）
     codeContent = code.rich_text.map((t) => t.plain_text || "").join("\n");
-    console.log(`DEBUG: 从rich_text获取内容: "${codeContent}"`);
+    console.error(`[MERMAID-DEBUG] ✅ 从rich_text获取内容(${codeContent.length}字符): "${codeContent}"`);
   } else if (code.text && Array.isArray(code.text) && code.text.length > 0) {
     // 方式2：从text字段获取（备用情况）
     codeContent = code.text.map((t) => t.plain_text || t.text?.content || "").join("\n");
-    console.log(`DEBUG: 从text获取内容: "${codeContent}"`);
+    console.error(`[MERMAID-DEBUG] ✅ 从text获取内容(${codeContent.length}字符): "${codeContent}"`);
   } else {
     // 方式3：检查其他可能的字段
-    console.log(`DEBUG: rich_text和text都为空，检查其他字段`);
+    console.error(`[MERMAID-DEBUG] ⚠️ rich_text和text都为空，检查其他字段`);
     
     // 尝试直接从code对象的其他属性获取
     const allKeys = Object.keys(code);
-    console.log(`DEBUG: code对象的所有键: ${allKeys.join(', ')}`);
+    console.error(`[MERMAID-DEBUG] code对象的所有键: [${allKeys.join(', ')}]`);
+    
+    // 检查每个字段的值
+    allKeys.forEach(key => {
+      if (key !== 'language') {
+        console.error(`[MERMAID-DEBUG] ${key}:`, JSON.stringify(code[key], null, 2));
+      }
+    });
     
     // 如果rich_text字段存在但为空数组，创建默认的空内容，避免内置逻辑报错
     if (!code.rich_text || !Array.isArray(code.rich_text)) {
-      console.log(`DEBUG: rich_text字段缺失或格式错误，创建默认值`);
+      console.error(`[MERMAID-DEBUG] ⚠️ rich_text字段缺失或格式错误，返回空代码块`);
       // 直接返回空代码块，避免内置逻辑处理时出错
       return `\`\`\`${language}\n\n\`\`\``;
     }
   }
   
-  console.log(`DEBUG: 最终内容长度=${codeContent.length}`);
+  const result = `\`\`\`${language}\n${codeContent}\n\`\`\``;
+  console.error(`[MERMAID-DEBUG] 🎯 最终结果(${result.length}字符):`);
+  console.error(`[MERMAID-DEBUG] ${result}`);
+  
+  // 如果是mermaid且内容为空，强制添加一些标记以便追踪
+  if (language === 'mermaid' && codeContent.length === 0) {
+    console.error(`[MERMAID-DEBUG] 🚨 MERMAID代码块内容为空！这就是问题所在！`);
+    // 返回带有调试标记的空mermaid块
+    return `\`\`\`mermaid\n<!-- MERMAID_DEBUG: 内容为空 -->\n\`\`\``;
+  }
   
   // 始终返回有效的代码块格式
-  return `\`\`\`${language}\n${codeContent}\n\`\`\``;
+  return result;
 }
 
 function getPropVal(data) {
