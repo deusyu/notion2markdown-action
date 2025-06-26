@@ -456,7 +456,7 @@ function icon2md(icon) {
 }
 
 /**
- * 自定义代码块转换器，防止 rich_text 为空时出错
+ * 自定义代码块转换器，兼容text和rich_text字段
  * @param {*} block 
  * @returns 
  */
@@ -464,12 +464,19 @@ function codeBlock(block) {
   const { code } = block;
   if (!code) return "";
   
-  // 安全地获取代码内容，处理 rich_text 可能为 undefined 的情况
-  const codeContent = code.rich_text && Array.isArray(code.rich_text) 
-    ? code.rich_text.map((t) => t.plain_text).join("\n")
-    : "";
-  
+  let codeContent = "";
   const language = code.language || "";
+  
+  // 尝试从多个可能的字段获取代码内容
+  if (code.rich_text && Array.isArray(code.rich_text) && code.rich_text.length > 0) {
+    // 方式1：从rich_text字段获取（某些情况下）
+    codeContent = code.rich_text.map((t) => t.plain_text || t.text?.content || "").join("\n");
+  } else if (code.text && Array.isArray(code.text) && code.text.length > 0) {
+    // 方式2：从text字段获取（notion-to-md转换后的格式）
+    codeContent = code.text.map((t) => t.plain_text || t.text?.content || "").join("\n");
+  }
+  
+  console.log(`DEBUG: codeBlock - 语言=${language}, 内容长度=${codeContent.length}`);
   
   return `\`\`\`${language}\n${codeContent}\n\`\`\``;
 }
