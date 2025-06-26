@@ -97,8 +97,10 @@ function init(cfg) {
   n2m.setCustomTransformer("audio", t.audio);
   n2m.setCustomTransformer("image", t.image);
   n2m.setCustomTransformer("code", codeBlock);
+  n2m.setCustomTransformer("mermaid", mermaidBlock);  // 添加mermaid专用转换器
   
   console.error(`[MERMAID-DEBUG] ✅ 代码块转换器已注册，函数名:`, codeBlock.name);
+  console.error(`[MERMAID-DEBUG] ✅ Mermaid转换器已注册，函数名:`, mermaidBlock.name);
   console.error(`[MERMAID-DEBUG] 📝 已注册的转换器列表:`, Object.keys(n2m.customTransformers || {}));
 }
 
@@ -262,9 +264,52 @@ async function sync() {
  */
 
 async function page2Markdown(page, filePath, properties) {
+  // 在转换开始前输出版本信息，确保使用的是正确版本
+  console.error(`[MERMAID-DEBUG] 🚀 开始转换页面: ${page.id}`);
+  console.error(`[MERMAID-DEBUG] 📅 当前时间: ${new Date().toISOString()}`);
+  console.error(`[MERMAID-DEBUG] 🔧 版本信息: v1.1.6-debug-detailed`);
+  
   const mdblocks = await n2m.pageToMarkdown(page.id);
+  console.error(`[MERMAID-DEBUG] 📊 获取到 ${mdblocks.length} 个块`);
+  
+  // 分析每个块的类型，特别关注代码块
+  mdblocks.forEach((block, index) => {
+    console.error(`[MERMAID-DEBUG] 📦 块 ${index}: 类型=${block.type || 'unknown'}`);
+    
+    // 如果是代码块，详细分析
+    if (block.type === 'code' || (block.parent && block.parent.includes('```'))) {
+      console.error(`[MERMAID-DEBUG] 🎯 发现代码块! 块${index}`);
+      console.error(`[MERMAID-DEBUG] 📄 完整块数据:`, JSON.stringify(block, null, 2));
+    }
+    
+    // 检查是否包含mermaid相关内容
+    const blockStr = JSON.stringify(block);
+    if (blockStr.includes('mermaid') || blockStr.includes('graph')) {
+      console.error(`[MERMAID-DEBUG] 🔍 块${index}包含mermaid/graph关键词!`);
+      console.error(`[MERMAID-DEBUG] 📋 块内容:`, JSON.stringify(block, null, 2));
+    }
+  });
+  
   // 转换为markdown
   let md = n2m.toMarkdownString(mdblocks).parent;
+  
+  // 检查最终markdown中是否包含mermaid
+  if (md.includes('mermaid')) {
+    console.error(`[MERMAID-DEBUG] ✅ 最终markdown包含mermaid关键词`);
+    // 输出mermaid相关部分
+    const lines = md.split('\n');
+    lines.forEach((line, index) => {
+      if (line.includes('mermaid') || line.includes('```')) {
+        console.error(`[MERMAID-DEBUG] 第${index}行: ${line}`);
+      }
+    });
+  } else {
+    console.error(`[MERMAID-DEBUG] ❌ 最终markdown不包含mermaid关键词`);
+    console.error(`[MERMAID-DEBUG] 📝 markdown长度: ${md.length} 字符`);
+    // 输出前500字符以供检查
+    console.error(`[MERMAID-DEBUG] 📖 markdown前500字符:`, md.substring(0, 500));
+  }
+  
   // 将图床上传和URL替换放到这里，避免后续对于MD文件的二次处理.
   if (config.migrate_image) {
     // 处理内容图片和视频
@@ -460,6 +505,54 @@ function icon2md(icon) {
       return `<img src="${icon.external.url}" width="25px" />\n`;
   }
   return "";
+}
+
+/**
+ * 专门的Mermaid块转换器
+ * @param {*} block 
+ * @returns 
+ */
+function mermaidBlock(block) {
+  const log = (msg) => {
+    console.log(msg);
+    console.error(msg);
+    process.stderr.write(msg + '\n');
+  };
+  
+  log(`[MERMAID-DEBUG] 🎯 Mermaid转换器被调用！时间戳: ${new Date().toISOString()}`);
+  log(`[MERMAID-DEBUG] 📦 Mermaid块完整数据: ${JSON.stringify(block, null, 2)}`);
+  
+  // 检查不同可能的字段
+  let mermaidContent = "";
+  
+  if (block.mermaid) {
+    log(`[MERMAID-DEBUG] 🔍 找到mermaid字段`);
+    const mermaid = block.mermaid;
+    
+    if (mermaid.rich_text && Array.isArray(mermaid.rich_text)) {
+      mermaidContent = mermaid.rich_text.map(t => t.plain_text || "").join("\n");
+      log(`[MERMAID-DEBUG] ✅ 从mermaid.rich_text获取内容: ${mermaidContent}`);
+    } else if (mermaid.text && Array.isArray(mermaid.text)) {
+      mermaidContent = mermaid.text.map(t => t.plain_text || t.text?.content || "").join("\n");
+      log(`[MERMAID-DEBUG] ✅ 从mermaid.text获取内容: ${mermaidContent}`);
+    }
+  }
+  
+  // 如果还是空，尝试其他字段
+  if (!mermaidContent && block.code) {
+    log(`[MERMAID-DEBUG] 🔄 fallback到code字段`);
+    const code = block.code;
+    if (code.rich_text && Array.isArray(code.rich_text)) {
+      mermaidContent = code.rich_text.map(t => t.plain_text || "").join("\n");
+    } else if (code.text && Array.isArray(code.text)) {
+      mermaidContent = code.text.map(t => t.plain_text || t.text?.content || "").join("\n");
+    }
+  }
+  
+  const result = `\`\`\`mermaid\n${mermaidContent}\n\`\`\``;
+  log(`[MERMAID-DEBUG] 🎉 Mermaid最终结果: ${result}`);
+  
+  return result;
 }
 
 /**
