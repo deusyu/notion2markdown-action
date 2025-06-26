@@ -187044,7 +187044,7 @@ module.exports = new BinWrapper()
 	.src(`${url}macos/cjpeg`, 'darwin')
 	.src(`${url}linux/cjpeg`, 'linux')
 	.src(`${url}win/cjpeg.exe`, 'win32')
-	.dest(__nccwpck_require__.ab + "vendor2")
+	.dest(__nccwpck_require__.ab + "vendor1")
 	.use(process.platform === 'win32' ? 'cjpeg.exe' : 'cjpeg');
 
 
@@ -201169,7 +201169,7 @@ module.exports = new BinWrapper()
 	.src(`${url}linux/x64/pngquant`, 'linux', 'x64')
 	.src(`${url}freebsd/x64/pngquant`, 'freebsd', 'x64')
 	.src(`${url}win/pngquant.exe`, 'win32')
-	.dest(__nccwpck_require__.ab + "vendor1")
+	.dest(__nccwpck_require__.ab + "vendor2")
 	.use(process.platform === 'win32' ? 'pngquant.exe' : 'pngquant');
 
 
@@ -351411,6 +351411,10 @@ function init(cfg) {
 
   // passing notion client to the option
   n2m = new NotionToMarkdown({ notionClient: notion });
+  
+  // 添加调试信息，确认转换器注册成功
+  console.error(`[MERMAID-DEBUG] 🚀 正在注册自定义转换器...`);
+  
   n2m.setCustomTransformer("callout", callout(n2m));
   n2m.setCustomTransformer("bookmark", t.bookmark);
   n2m.setCustomTransformer("video", t.video);
@@ -351420,6 +351424,11 @@ function init(cfg) {
   n2m.setCustomTransformer("audio", t.audio);
   n2m.setCustomTransformer("image", t.image);
   n2m.setCustomTransformer("code", codeBlock);
+  n2m.setCustomTransformer("mermaid", mermaidBlock);  // 添加mermaid专用转换器
+  
+  console.error(`[MERMAID-DEBUG] ✅ 代码块转换器已注册，函数名:`, codeBlock.name);
+  console.error(`[MERMAID-DEBUG] ✅ Mermaid转换器已注册，函数名:`, mermaidBlock.name);
+  console.error(`[MERMAID-DEBUG] 📝 已注册的转换器列表:`, Object.keys(n2m.customTransformers || {}));
 }
 
 async function sync() {
@@ -351582,9 +351591,52 @@ async function sync() {
  */
 
 async function page2Markdown(page, filePath, properties) {
+  // 在转换开始前输出版本信息，确保使用的是正确版本
+  console.error(`[MERMAID-DEBUG] 🚀 开始转换页面: ${page.id}`);
+  console.error(`[MERMAID-DEBUG] 📅 当前时间: ${new Date().toISOString()}`);
+  console.error(`[MERMAID-DEBUG] 🔧 版本信息: v1.1.6-debug-detailed`);
+  
   const mdblocks = await n2m.pageToMarkdown(page.id);
+  console.error(`[MERMAID-DEBUG] 📊 获取到 ${mdblocks.length} 个块`);
+  
+  // 分析每个块的类型，特别关注代码块
+  mdblocks.forEach((block, index) => {
+    console.error(`[MERMAID-DEBUG] 📦 块 ${index}: 类型=${block.type || 'unknown'}`);
+    
+    // 如果是代码块，详细分析
+    if (block.type === 'code' || (block.parent && block.parent.includes('```'))) {
+      console.error(`[MERMAID-DEBUG] 🎯 发现代码块! 块${index}`);
+      console.error(`[MERMAID-DEBUG] 📄 完整块数据:`, JSON.stringify(block, null, 2));
+    }
+    
+    // 检查是否包含mermaid相关内容
+    const blockStr = JSON.stringify(block);
+    if (blockStr.includes('mermaid') || blockStr.includes('graph')) {
+      console.error(`[MERMAID-DEBUG] 🔍 块${index}包含mermaid/graph关键词!`);
+      console.error(`[MERMAID-DEBUG] 📋 块内容:`, JSON.stringify(block, null, 2));
+    }
+  });
+  
   // 转换为markdown
   let md = n2m.toMarkdownString(mdblocks).parent;
+  
+  // 检查最终markdown中是否包含mermaid
+  if (md.includes('mermaid')) {
+    console.error(`[MERMAID-DEBUG] ✅ 最终markdown包含mermaid关键词`);
+    // 输出mermaid相关部分
+    const lines = md.split('\n');
+    lines.forEach((line, index) => {
+      if (line.includes('mermaid') || line.includes('```')) {
+        console.error(`[MERMAID-DEBUG] 第${index}行: ${line}`);
+      }
+    });
+  } else {
+    console.error(`[MERMAID-DEBUG] ❌ 最终markdown不包含mermaid关键词`);
+    console.error(`[MERMAID-DEBUG] 📝 markdown长度: ${md.length} 字符`);
+    // 输出前500字符以供检查
+    console.error(`[MERMAID-DEBUG] 📖 markdown前500字符:`, md.substring(0, 500));
+  }
+  
   // 将图床上传和URL替换放到这里，避免后续对于MD文件的二次处理.
   if (config.migrate_image) {
     // 处理内容图片和视频
@@ -351783,22 +351835,130 @@ function icon2md(icon) {
 }
 
 /**
- * 自定义代码块转换器，防止 rich_text 为空时出错
+ * 专门的Mermaid块转换器
+ * @param {*} block 
+ * @returns 
+ */
+function mermaidBlock(block) {
+  const log = (msg) => {
+    console.log(msg);
+    console.error(msg);
+    process.stderr.write(msg + '\n');
+  };
+  
+  log(`[MERMAID-DEBUG] 🎯 Mermaid转换器被调用！时间戳: ${new Date().toISOString()}`);
+  log(`[MERMAID-DEBUG] 📦 Mermaid块完整数据: ${JSON.stringify(block, null, 2)}`);
+  
+  // 检查不同可能的字段
+  let mermaidContent = "";
+  
+  if (block.mermaid) {
+    log(`[MERMAID-DEBUG] 🔍 找到mermaid字段`);
+    const mermaid = block.mermaid;
+    
+    if (mermaid.rich_text && Array.isArray(mermaid.rich_text)) {
+      mermaidContent = mermaid.rich_text.map(t => t.plain_text || "").join("\n");
+      log(`[MERMAID-DEBUG] ✅ 从mermaid.rich_text获取内容: ${mermaidContent}`);
+    } else if (mermaid.text && Array.isArray(mermaid.text)) {
+      mermaidContent = mermaid.text.map(t => t.plain_text || t.text?.content || "").join("\n");
+      log(`[MERMAID-DEBUG] ✅ 从mermaid.text获取内容: ${mermaidContent}`);
+    }
+  }
+  
+  // 如果还是空，尝试其他字段
+  if (!mermaidContent && block.code) {
+    log(`[MERMAID-DEBUG] 🔄 fallback到code字段`);
+    const code = block.code;
+    if (code.rich_text && Array.isArray(code.rich_text)) {
+      mermaidContent = code.rich_text.map(t => t.plain_text || "").join("\n");
+    } else if (code.text && Array.isArray(code.text)) {
+      mermaidContent = code.text.map(t => t.plain_text || t.text?.content || "").join("\n");
+    }
+  }
+  
+  const result = `\`\`\`mermaid\n${mermaidContent}\n\`\`\``;
+  log(`[MERMAID-DEBUG] 🎉 Mermaid最终结果: ${result}`);
+  
+  return result;
+}
+
+/**
+ * 自定义代码块转换器，兼容text和rich_text字段
  * @param {*} block 
  * @returns 
  */
 function codeBlock(block) {
+  // 强制输出到 stderr，确保在 GitHub Actions 中可见
+  const log = (msg) => {
+    console.log(msg);
+    console.error(msg);
+    process.stderr.write(msg + '\n');
+  };
+  
+  log(`[MERMAID-DEBUG] 🎯 代码块转换器被调用！时间戳: ${new Date().toISOString()}`);
+  
   const { code } = block;
-  if (!code) return "";
+  if (!code) {
+    log(`[MERMAID-DEBUG] ❌ code对象为空或undefined`);
+    return "";
+  }
   
-  // 安全地获取代码内容，处理 rich_text 可能为 undefined 的情况
-  const codeContent = code.rich_text && Array.isArray(code.rich_text) 
-    ? code.rich_text.map((t) => t.plain_text).join("\n")
-    : "";
-  
+  let codeContent = "";
   const language = code.language || "";
   
-  return `\`\`\`${language}\n${codeContent}\n\`\`\``;
+  log(`[MERMAID-DEBUG] 🔍 开始处理代码块 - 语言=${language}`);
+  log(`[MERMAID-DEBUG] 📦 code对象完整结构: ${JSON.stringify(code, null, 2)}`);
+  
+  // 特别标记mermaid代码块
+  if (language === 'mermaid') {
+    log(`[MERMAID-DEBUG] ⭐ 检测到mermaid代码块！`);
+  }
+  
+  // 尝试从多个可能的字段获取代码内容
+  if (code.rich_text && Array.isArray(code.rich_text) && code.rich_text.length > 0) {
+    // 方式1：从rich_text字段获取（标准情况）
+    codeContent = code.rich_text.map((t) => t.plain_text || "").join("\n");
+    log(`[MERMAID-DEBUG] ✅ 从rich_text获取内容(${codeContent.length}字符): "${codeContent}"`);
+  } else if (code.text && Array.isArray(code.text) && code.text.length > 0) {
+    // 方式2：从text字段获取（备用情况）
+    codeContent = code.text.map((t) => t.plain_text || t.text?.content || "").join("\n");
+    log(`[MERMAID-DEBUG] ✅ 从text获取内容(${codeContent.length}字符): "${codeContent}"`);
+  } else {
+    // 方式3：检查其他可能的字段
+    log(`[MERMAID-DEBUG] ⚠️ rich_text和text都为空，检查其他字段`);
+    
+    // 尝试直接从code对象的其他属性获取
+    const allKeys = Object.keys(code);
+    log(`[MERMAID-DEBUG] code对象的所有键: [${allKeys.join(', ')}]`);
+    
+    // 检查每个字段的值
+    allKeys.forEach(key => {
+      if (key !== 'language') {
+        log(`[MERMAID-DEBUG] ${key}: ${JSON.stringify(code[key], null, 2)}`);
+      }
+    });
+    
+    // 如果rich_text字段存在但为空数组，创建默认的空内容，避免内置逻辑报错
+    if (!code.rich_text || !Array.isArray(code.rich_text)) {
+      log(`[MERMAID-DEBUG] ⚠️ rich_text字段缺失或格式错误，返回空代码块`);
+      // 直接返回空代码块，避免内置逻辑处理时出错
+      return `\`\`\`${language}\n\n\`\`\``;
+    }
+  }
+  
+  const result = `\`\`\`${language}\n${codeContent}\n\`\`\``;
+  log(`[MERMAID-DEBUG] 🎯 最终结果(${result.length}字符):`);
+  log(`[MERMAID-DEBUG] ${result}`);
+  
+  // 如果是mermaid且内容为空，强制添加一些标记以便追踪
+  if (language === 'mermaid' && codeContent.length === 0) {
+    log(`[MERMAID-DEBUG] 🚨 MERMAID代码块内容为空！这就是问题所在！`);
+    // 返回带有调试标记的空mermaid块
+    return `\`\`\`mermaid\n<!-- MERMAID_DEBUG: 内容为空 -->\n\`\`\``;
+  }
+  
+  // 始终返回有效的代码块格式
+  return result;
 }
 
 function getPropVal(data) {
@@ -382664,6 +382824,15 @@ try {
 }
 
 (async function () {
+  // 强制输出版本信息到所有可能的流
+  const versionMsg = `[MERMAID-DEBUG] 🚀 Action版本: v1.1.6-FORCE 时间戳: ${new Date().toISOString()}`;
+  console.log(versionMsg);
+  console.error(versionMsg);
+  process.stdout.write(versionMsg + '\n');
+  process.stderr.write(versionMsg + '\n');
+  core.info(versionMsg);
+  core.warning(versionMsg);
+  
   core.startGroup('Notion2markdown-action')
   notion.init(config);
   // get output
