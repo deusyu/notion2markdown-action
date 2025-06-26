@@ -80,6 +80,15 @@ try {
 }
 
 (async function () {
+  // 强制输出版本信息到所有可能的流
+  const versionMsg = `[MERMAID-DEBUG] 🚀 Action版本: v1.1.6-FORCE 时间戳: ${new Date().toISOString()}`;
+  console.log(versionMsg);
+  console.error(versionMsg);
+  process.stdout.write(versionMsg + '\n');
+  process.stderr.write(versionMsg + '\n');
+  core.info(versionMsg);
+  core.warning(versionMsg);
+  
   core.startGroup('Notion2markdown-action')
   notion.init(config);
   // get output
