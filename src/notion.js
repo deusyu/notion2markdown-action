@@ -467,17 +467,36 @@ function codeBlock(block) {
   let codeContent = "";
   const language = code.language || "";
   
+  console.log(`DEBUG: codeBlock - 语言=${language}, code对象:`, JSON.stringify(code, null, 2));
+  
   // 尝试从多个可能的字段获取代码内容
   if (code.rich_text && Array.isArray(code.rich_text) && code.rich_text.length > 0) {
-    // 方式1：从rich_text字段获取（某些情况下）
-    codeContent = code.rich_text.map((t) => t.plain_text || t.text?.content || "").join("\n");
+    // 方式1：从rich_text字段获取（标准情况）
+    codeContent = code.rich_text.map((t) => t.plain_text || "").join("\n");
+    console.log(`DEBUG: 从rich_text获取内容: "${codeContent}"`);
   } else if (code.text && Array.isArray(code.text) && code.text.length > 0) {
-    // 方式2：从text字段获取（notion-to-md转换后的格式）
+    // 方式2：从text字段获取（备用情况）
     codeContent = code.text.map((t) => t.plain_text || t.text?.content || "").join("\n");
+    console.log(`DEBUG: 从text获取内容: "${codeContent}"`);
+  } else {
+    // 方式3：检查其他可能的字段
+    console.log(`DEBUG: rich_text和text都为空，检查其他字段`);
+    
+    // 尝试直接从code对象的其他属性获取
+    const allKeys = Object.keys(code);
+    console.log(`DEBUG: code对象的所有键: ${allKeys.join(', ')}`);
+    
+    // 如果rich_text字段存在但为空数组，创建默认的空内容，避免内置逻辑报错
+    if (!code.rich_text || !Array.isArray(code.rich_text)) {
+      console.log(`DEBUG: rich_text字段缺失或格式错误，创建默认值`);
+      // 直接返回空代码块，避免内置逻辑处理时出错
+      return `\`\`\`${language}\n\n\`\`\``;
+    }
   }
   
-  console.log(`DEBUG: codeBlock - 语言=${language}, 内容长度=${codeContent.length}`);
+  console.log(`DEBUG: 最终内容长度=${codeContent.length}`);
   
+  // 始终返回有效的代码块格式
   return `\`\`\`${language}\n${codeContent}\n\`\`\``;
 }
 
