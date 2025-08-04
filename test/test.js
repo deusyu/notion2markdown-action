@@ -1,12 +1,13 @@
 /*
- * @Author: Dorad, ddxi@qq.com
+ * @Author: deusyu <daniel@deusyu.app>
+ * @OriginalAuthor: Dorad, ddxi@qq.com
  * @Date: 2023-04-16 17:05:49 +02:00
  * @LastEditors: Dorad, ddxi@qq.com
  * @LastEditTime: 2023-04-16 21:18:46 +02:00
  * @FilePath: \test\test.js
  * @Description: 
  * 
- * Copyright (c) 2023 by Dorad (ddxi@qq.com), All Rights Reserved.
+ * Copyright (c) 2023-2025 by deusyu (daniel@deusyu.app), All Rights Reserved.
  */
 const notion = require("../src/notion");
 const fs = require("fs");

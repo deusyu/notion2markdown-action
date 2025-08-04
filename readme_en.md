@@ -273,4 +273,5 @@ This action is licensed under the MIT License. See the [LICENSE](./LICENSE) file
 
 **Acknowledgments**
 - **Dorad** - *Original project author* - [notion2markdown-action](https://github.com/Doradx/notion2markdown-action)
+- **mohuishou** - *Major contributor*
 - All developers contributing to the open source community

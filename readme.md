@@ -273,5 +273,6 @@ jobs:
 
 **致谢**
 - **Dorad** - *原始项目作者* - [notion2markdown-action](https://github.com/Doradx/notion2markdown-action)
+- **mohuishou** - *重要功能贡献者*
 - 所有为开源社区贡献的开发者们
 

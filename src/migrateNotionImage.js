@@ -1,12 +1,13 @@
 /*
- * @Author: Dorad, ddxi@qq.com
+ * @Author: deusyu <daniel@deusyu.app>
+ * @OriginalAuthor: Dorad, ddxi@qq.com
  * @Date: 2023-09-03 14:22:38 +08:00
  * @LastEditors: Dorad, ddxi@qq.com
  * @LastEditTime: 2023-09-04 11:13:42 +08:00
  * @FilePath: \src\migrateNotionImage.js
  * @Description: 
  * 
- * Copyright (c) 2023 by Dorad (ddxi@qq.com), All Rights Reserved.
+ * Copyright (c) 2023-2025 by deusyu (daniel@deusyu.app), All Rights Reserved.
  */
 
 
