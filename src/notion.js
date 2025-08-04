@@ -343,17 +343,23 @@ async function page2Markdown(page, filePath, properties) {
       }
     }
   }
-  // remove created_time and last_edited_time from properties
-  if (config?.metas_excluded && config.metas_excluded.length){
-    // delete the key within metas_excluded for properties
-    for(const key of config.metas_excluded){
+  // 删除不需要的字段
+  if (config?.metas_excluded && config.metas_excluded.length) {
+    for(const key of config.metas_excluded) {
       if(key && key in properties) {
         delete properties[key];
       }
     }
   }
-  delete properties.created_time;
-  delete properties.last_edited_time;
+  
+  // 🆕 智能删除系统时间字段
+  // 只有在有用户自定义字段时才删除系统字段
+  if (properties['date'] || properties['created']) {
+    delete properties.created_time;
+  }
+  if (properties['updated']) {
+    delete properties.last_edited_time;
+  }
   let fm = YAML.stringify(properties, { doubleQuotedAsJSON: true });
   md = format(`---\n${fm}---\n\n${md}`, { parser: "markdown" });
   writeFileSync(filePath, md);
@@ -445,12 +451,15 @@ function loadPropertiesAndContentFromMarkdownFile(filepath) {
 async function getPropertiesDict(page) {
   if(!page) return {};
   let data = {};
+  
+  // 处理数据库属性
   for (const key in page.properties) {
     const value = getPropVal(page.properties[key]);
     if (value == undefined || value == "") continue;
     data[key] = value;
   }
-  // cover image
+  
+  // 封面图处理
   if (page.cover) {
     if (page.cover.type === "external") {
       data['cover'] = page.cover.external.url;
@@ -458,10 +467,25 @@ async function getPropertiesDict(page) {
       data['cover'] = page.cover.file.url;
     }
   }
-  // id, created, updated time
+  
+  // 🆕 智能时间字段处理
   data['id'] = page.id;
-  data['created_time'] = page.created_time;
-  data['last_edited_time'] = page.last_edited_time;
+  
+  // 只在没有用户自定义时间字段时才添加系统字段
+  if (!data['created'] && !data['created_at']) {
+    data['created_at'] = page.created_time;
+  }
+  
+  // 如果没有updated字段，添加系统last_edited_time
+  if (!data['updated']) {
+    const mt = moment(page.last_edited_time);
+    if (mt.isValid()) {
+      data['updated'] = config?.timezone ? 
+        mt.tz(config.timezone).format('YYYY-MM-DD HH:mm:ss') : 
+        mt.format();
+    }
+  }
+  
   return data;
 }
 
@@ -646,6 +670,21 @@ function getPropVal(data) {
       var mt = moment(val.start);
       if (!mt.isValid()) return val.start;
       return config?.timezone ? mt.tz(config.timezone).format('YYYY-MM-DD HH:mm:ss') : mt.format();
+    case "formula":
+      // 🆕 处理公式字段
+      if (val.type === "date" && val.date) {
+        // 处理返回日期的公式
+        var mt = moment(val.date.start);
+        if (!mt.isValid()) return val.date.start;
+        return config?.timezone ? mt.tz(config.timezone).format('YYYY-MM-DD HH:mm:ss') : mt.format();
+      } else if (val.type === "string") {
+        return val.string;
+      } else if (val.type === "number") {
+        return val.number;
+      } else if (val.type === "boolean") {
+        return val.boolean;
+      }
+      return "";
     case "rich_text":
     case "title":
       return val.map((a) => a.plain_text).join("");
