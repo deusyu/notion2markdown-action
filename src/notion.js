@@ -1,12 +1,13 @@
 /*
- * @Author: Dorad, ddxi@qq.com
+ * @Author: deusyu <daniel@deusyu.app>
+ * @OriginalAuthor: Dorad, ddxi@qq.com
  * @Date: 2023-04-12 18:38:51 +02:00
  * @LastEditors: Dorad, ddxi@qq.com
  * @LastEditTime: 2023-09-04 10:35:40 +08:00
  * @FilePath: \src\notion.js
  * @Description: 
  * 
- * Copyright (c) 2023 by Dorad (ddxi@qq.com), All Rights Reserved.
+ * Copyright (c) 2023-2025 by deusyu (daniel@deusyu.app), All Rights Reserved.
  */
 const { Client } = require("@notionhq/client");
 const { writeFileSync, existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync } = require("fs");

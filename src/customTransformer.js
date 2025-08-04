@@ -1,12 +1,13 @@
 /*
- * @Author: Dorad, ddxi@qq.com
+ * @Author: deusyu <daniel@deusyu.app>
+ * @OriginalAuthor: Dorad, ddxi@qq.com
  * @Date: 2023-04-18 22:07:58 +02:00
  * @LastEditors: Dorad, ddxi@qq.com
  * @LastEditTime: 2023-04-19 18:59:22 +02:00
  * @FilePath: \src\customTransformer.js
  * @Description: 
  * 
- * Copyright (c) 2023 by Dorad (ddxi@qq.com), All Rights Reserved.
+ * Copyright (c) 2023-2025 by deusyu (daniel@deusyu.app), All Rights Reserved.
  */
 
 const axios = require('axios');
