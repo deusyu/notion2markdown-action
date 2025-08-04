@@ -350691,14 +350691,15 @@ function defaultCallback(err) {
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 /*
- * @Author: Dorad, ddxi@qq.com
+ * @Author: deusyu <daniel@deusyu.app>
+ * @OriginalAuthor: Dorad, ddxi@qq.com
  * @Date: 2023-04-18 22:07:58 +02:00
  * @LastEditors: Dorad, ddxi@qq.com
  * @LastEditTime: 2023-04-19 18:59:22 +02:00
  * @FilePath: \src\customTransformer.js
  * @Description: 
  * 
- * Copyright (c) 2023 by Dorad (ddxi@qq.com), All Rights Reserved.
+ * Copyright (c) 2023-2025 by deusyu (daniel@deusyu.app), All Rights Reserved.
  */
 
 const axios = __nccwpck_require__(26259);
@@ -351112,14 +351113,15 @@ module.exports = {
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 /*
- * @Author: Dorad, ddxi@qq.com
+ * @Author: deusyu <daniel@deusyu.app>
+ * @OriginalAuthor: Dorad, ddxi@qq.com
  * @Date: 2023-09-03 14:22:38 +08:00
  * @LastEditors: Dorad, ddxi@qq.com
  * @LastEditTime: 2023-09-04 11:13:42 +08:00
  * @FilePath: \src\migrateNotionImage.js
  * @Description: 
  * 
- * Copyright (c) 2023 by Dorad (ddxi@qq.com), All Rights Reserved.
+ * Copyright (c) 2023-2025 by deusyu (daniel@deusyu.app), All Rights Reserved.
  */
 
 
@@ -351326,14 +351328,15 @@ module.exports = {
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 /*
- * @Author: Dorad, ddxi@qq.com
+ * @Author: deusyu <daniel@deusyu.app>
+ * @OriginalAuthor: Dorad, ddxi@qq.com
  * @Date: 2023-04-12 18:38:51 +02:00
  * @LastEditors: Dorad, ddxi@qq.com
  * @LastEditTime: 2023-09-04 10:35:40 +08:00
  * @FilePath: \src\notion.js
  * @Description: 
  * 
- * Copyright (c) 2023 by Dorad (ddxi@qq.com), All Rights Reserved.
+ * Copyright (c) 2023-2025 by deusyu (daniel@deusyu.app), All Rights Reserved.
  */
 const { Client } = __nccwpck_require__(58761);
 const { writeFileSync, existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync } = __nccwpck_require__(79896);
@@ -351594,7 +351597,7 @@ async function page2Markdown(page, filePath, properties) {
   // 在转换开始前输出版本信息，确保使用的是正确版本
   console.error(`[MERMAID-DEBUG] 🚀 开始转换页面: ${page.id}`);
   console.error(`[MERMAID-DEBUG] 📅 当前时间: ${new Date().toISOString()}`);
-  console.error(`[MERMAID-DEBUG] 🔧 版本信息: v1.1.6-debug-detailed`);
+      console.error(`[MERMAID-DEBUG] 🔧 版本信息: v1.1.9`);
   
   const mdblocks = await n2m.pageToMarkdown(page.id);
   console.error(`[MERMAID-DEBUG] 📊 获取到 ${mdblocks.length} 个块`);
@@ -351670,17 +351673,23 @@ async function page2Markdown(page, filePath, properties) {
       }
     }
   }
-  // remove created_time and last_edited_time from properties
-  if (config?.metas_excluded && config.metas_excluded.length){
-    // delete the key within metas_excluded for properties
-    for(const key of config.metas_excluded){
+  // 删除不需要的字段
+  if (config?.metas_excluded && config.metas_excluded.length) {
+    for(const key of config.metas_excluded) {
       if(key && key in properties) {
         delete properties[key];
       }
     }
   }
-  delete properties.created_time;
-  delete properties.last_edited_time;
+  
+  // 🆕 智能删除系统时间字段
+  // 只有在有用户自定义字段时才删除系统字段
+  if (properties['date'] || properties['created']) {
+    delete properties.created_time;
+  }
+  if (properties['updated']) {
+    delete properties.last_edited_time;
+  }
   let fm = YAML.stringify(properties, { doubleQuotedAsJSON: true });
   md = format(`---\n${fm}---\n\n${md}`, { parser: "markdown" });
   writeFileSync(filePath, md);
@@ -351772,12 +351781,15 @@ function loadPropertiesAndContentFromMarkdownFile(filepath) {
 async function getPropertiesDict(page) {
   if(!page) return {};
   let data = {};
+  
+  // 处理数据库属性
   for (const key in page.properties) {
     const value = getPropVal(page.properties[key]);
     if (value == undefined || value == "") continue;
     data[key] = value;
   }
-  // cover image
+  
+  // 封面图处理
   if (page.cover) {
     if (page.cover.type === "external") {
       data['cover'] = page.cover.external.url;
@@ -351785,10 +351797,25 @@ async function getPropertiesDict(page) {
       data['cover'] = page.cover.file.url;
     }
   }
-  // id, created, updated time
+  
+  // 🆕 智能时间字段处理
   data['id'] = page.id;
-  data['created_time'] = page.created_time;
-  data['last_edited_time'] = page.last_edited_time;
+  
+  // 只在没有用户自定义时间字段时才添加系统字段
+  if (!data['created'] && !data['created_at']) {
+    data['created_at'] = page.created_time;
+  }
+  
+  // 如果没有updated字段，添加系统last_edited_time
+  if (!data['updated']) {
+    const mt = moment(page.last_edited_time);
+    if (mt.isValid()) {
+      data['updated'] = config?.timezone ? 
+        mt.tz(config.timezone).format('YYYY-MM-DD HH:mm:ss') : 
+        mt.format();
+    }
+  }
+  
   return data;
 }
 
@@ -351973,6 +352000,21 @@ function getPropVal(data) {
       var mt = moment(val.start);
       if (!mt.isValid()) return val.start;
       return config?.timezone ? mt.tz(config.timezone).format('YYYY-MM-DD HH:mm:ss') : mt.format();
+    case "formula":
+      // 🆕 处理公式字段
+      if (val.type === "date" && val.date) {
+        // 处理返回日期的公式
+        var mt = moment(val.date.start);
+        if (!mt.isValid()) return val.date.start;
+        return config?.timezone ? mt.tz(config.timezone).format('YYYY-MM-DD HH:mm:ss') : mt.format();
+      } else if (val.type === "string") {
+        return val.string;
+      } else if (val.type === "number") {
+        return val.number;
+      } else if (val.type === "boolean") {
+        return val.boolean;
+      }
+      return "";
     case "rich_text":
     case "title":
       return val.map((a) => a.plain_text).join("");
@@ -382743,14 +382785,15 @@ module.exports = /*#__PURE__*/JSON.parse('["UTF-8","IBM866","ISO-8859-2","ISO-88
 /************************************************************************/
 var __webpack_exports__ = {};
 /*
- * @Author: Dorad, ddxi@qq.com
+ * @Author: deusyu <daniel@deusyu.app>
+ * @OriginalAuthor: Dorad, ddxi@qq.com
  * @Date: 2023-09-02 10:54:25 +08:00
  * @LastEditors: Dorad, ddxi@qq.com
  * @LastEditTime: 2023-09-03 22:29:17 +08:00
  * @FilePath: \src\index.js
  * @Description: 
  * 
- * Copyright (c) 2023 by Dorad (ddxi@qq.com), All Rights Reserved.
+ * Copyright (c) 2023-2025 by deusyu (daniel@deusyu.app), All Rights Reserved.
  */
 const notion = __nccwpck_require__(56233);
 const core = __nccwpck_require__(72831);
@@ -382825,7 +382868,7 @@ try {
 
 (async function () {
   // 强制输出版本信息到所有可能的流
-  const versionMsg = `[MERMAID-DEBUG] 🚀 Action版本: v1.1.6-FORCE 时间戳: ${new Date().toISOString()}`;
+  const versionMsg = `[MERMAID-DEBUG] 🚀 Action版本: v1.1.9 时间戳: ${new Date().toISOString()}`;
   console.log(versionMsg);
   console.error(versionMsg);
   process.stdout.write(versionMsg + '\n');
