@@ -351165,7 +351165,16 @@ async function migrateNotionImageFromURL(ctx, url) {
   // 检查URL对应的图片是否已经存在
   const base_url = ctx.getConfig('pic-base-url') || null;
   const uuidreg = /[a-fA-F0-9]{8}-(?:[a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}/g;
-  const uuid = url.match(uuidreg)?.pop();
+  // 🔧 修复：从Notion API URL路径中提取图片ID（第二个UUID）
+  // URL格式：/spaceId/imageId/filename，所以取第二个UUID作为图片ID
+  const uuids = url.match(uuidreg);
+  let uuid = uuids && uuids.length >= 2 ? uuids[1] : uuids?.[0];
+  
+  // 🔧 Fallback: 如果没有UUID，使用URL的MD5作为唯一标识符
+  if (!uuid) {
+    const crypto = __nccwpck_require__(76982);
+    uuid = crypto.createHash('md5').update(url).digest('hex');
+  }
   let ext = url.split('?')[0].split('.').pop()?.toLowerCase();
   ext = ext == 'jpeg' ? 'jpg' : ext; // replace jpeg with jpg
   ext = ext == 'tiff' ? 'tif' : ext; // replace tiff with tif
@@ -351389,7 +351398,10 @@ function init(cfg) {
 
   if (!config?.pic_base_url && config.picBed?.uploader) {
     const bed = config.picBed[config.picBed?.uploader]
-    if (bed?.customUrl && bed?.path) {
+    // 🔧 修复：AWS S3使用urlPrefix作为base URL，不需要path
+    if (bed?.urlPrefix) {
+      config.pic_base_url = bed.urlPrefix;
+    } else if (bed?.customUrl && bed?.path) {
       config.pic_base_url = new URL(bed.path, bed.customUrl).href;
     }
   }
@@ -382773,7 +382785,7 @@ module.exports = /*#__PURE__*/JSON.parse('["UTF-8","IBM866","ISO-8859-2","ISO-88
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"name":"notion2markdown-action","version":"1.1.12","description":"将 Notion 数据库中的页面转换为 Markdown 文档，支持 Hexo、Hugo 等静态博客构建，内置 PicGo-Core 图床上传功能","main":"index.js","scripts":{"test":"node test/test.js","test:video":"node test/video-only.test.js","test:local":"node test/local.test.js","test:incremental":"node test/incremental.test.js","test:config":"node test/config-validator.js","build":"ncc build src/index.js -o dist/"},"author":"deusyu <daniel@deusyu.app>","contributors":["Dorad <https://github.com/Doradx> (Original author)","mohuishou <1@lailin.xyz>"],"license":"MIT","repository":{"type":"git","url":"https://github.com/deusyu/notion2markdown-action.git"},"homepage":"https://github.com/deusyu/notion2markdown-action","bugs":{"url":"https://github.com/deusyu/notion2markdown-action/issues"},"engines":{"node":">=16.0.0"},"keywords":["notion","markdown","hexo","hugo","blog","github-actions","picgo"],"dependencies":{"@actions/core":"^1.10.0","@actions/exec":"^1.1.0","@actions/github":"^5.1.1","@notionhq/client":"^0.4.9","@types/node":"^16.11.12","adm-zip":"^0.5.9","axios":"^0.24.0","cheerio":"^1.0.0-rc.12","dayjs":"^1.10.7","glob":"^7.2.0","image-size":"^1.0.2","imagemin":"^7.0.1","imagemin-gifsicle":"^7.0.0","imagemin-mozjpeg":"^9.0.0","imagemin-pngquant":"^9.0.2","imagemin-svgo":"^9.0.0","install":"^0.13.0","md5-file":"^5.0.0","moment-timezone":"^0.5.43","notion-to-md":"^3.1.1","npm":"^9.6.4","p-queue":"^7.3.4","picgo":"^1.5.6","prettier":"^2.7.1","proxy-agent":"^5.0.0","twemoji":"^13.1.0","yaml":"^2.0.0-9"}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"notion2markdown-action","version":"1.1.13","description":"将 Notion 数据库中的页面转换为 Markdown 文档，支持 Hexo、Hugo 等静态博客构建，内置 PicGo-Core 图床上传功能","main":"index.js","scripts":{"test":"node test/test.js","test:video":"node test/video-only.test.js","test:local":"node test/local.test.js","test:incremental":"node test/incremental.test.js","test:config":"node test/config-validator.js","build":"ncc build src/index.js -o dist/"},"author":"deusyu <daniel@deusyu.app>","contributors":["Dorad <https://github.com/Doradx> (Original author)","mohuishou <1@lailin.xyz>"],"license":"MIT","repository":{"type":"git","url":"https://github.com/deusyu/notion2markdown-action.git"},"homepage":"https://github.com/deusyu/notion2markdown-action","bugs":{"url":"https://github.com/deusyu/notion2markdown-action/issues"},"engines":{"node":">=16.0.0"},"keywords":["notion","markdown","hexo","hugo","blog","github-actions","picgo"],"dependencies":{"@actions/core":"^1.10.0","@actions/exec":"^1.1.0","@actions/github":"^5.1.1","@notionhq/client":"^0.4.9","@types/node":"^16.11.12","adm-zip":"^0.5.9","axios":"^0.24.0","cheerio":"^1.0.0-rc.12","dayjs":"^1.10.7","glob":"^7.2.0","image-size":"^1.0.2","imagemin":"^7.0.1","imagemin-gifsicle":"^7.0.0","imagemin-mozjpeg":"^9.0.0","imagemin-pngquant":"^9.0.2","imagemin-svgo":"^9.0.0","install":"^0.13.0","md5-file":"^5.0.0","moment-timezone":"^0.5.43","notion-to-md":"^3.1.1","npm":"^9.6.4","p-queue":"^7.3.4","picgo":"^1.5.6","prettier":"^2.7.1","proxy-agent":"^5.0.0","twemoji":"^13.1.0","yaml":"^2.0.0-9"}}');
 
 /***/ })
 
