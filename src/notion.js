@@ -201,12 +201,44 @@ async function sync() {
   /**
    * 处理需要更新的文章
    */
-  if (config?.last_sync_datetime && config.last_sync_datetime !== null) {
+  if (config?.last_sync_datetime && config.last_sync_datetime !== null && config.last_sync_datetime.trim() !== '') {
     if (!moment(config?.last_sync_datetime).isValid()) {
       console.error(`The last_sync_datetime ${config.last_sync_datetime} isn't valid.`);
     }
     console.info(`Only sync the pages on or after ${config.last_sync_datetime}`);
-    notionPagePropList = notionPagePropList.filter((prop) => prop[config.status.name] == config.status.published && moment(prop.last_edited_time) > moment(config.last_sync_datetime));
+    
+    // 🔍 增加详细的调试信息
+    const lastSyncMoment = moment(config.last_sync_datetime);
+    console.info(`🔍 增量同步调试信息:`);
+    console.info(`  - 配置的同步时间: ${config.last_sync_datetime}`);
+    console.info(`  - 解析后的时间: ${lastSyncMoment.toISOString()}`);
+    console.info(`  - 总页面数: ${notionPagePropList.length}`);
+    
+    // 过滤页面前，先统计一下
+    const beforeFilter = notionPagePropList.length;
+    
+    notionPagePropList = notionPagePropList.filter((prop) => {
+      const isPublished = prop[config.status.name] == config.status.published;
+      const pageEditTime = moment(prop.last_edited_time);
+      const isNewer = pageEditTime > lastSyncMoment;
+      
+      console.info(`  - 页面 "${prop.title}": 发布=${isPublished}, 编辑时间=${pageEditTime.toISOString()}, 需要同步=${isNewer}`);
+      
+      return isPublished && isNewer;
+    });
+    
+    const afterFilter = notionPagePropList.length;
+    console.info(`🎯 增量同步结果: ${beforeFilter} → ${afterFilter} 个页面需要处理`);
+  } else {
+    console.info(`🔄 执行全量同步 (无有效的last_sync_datetime)`);
+    console.info(`  - last_sync_datetime值: "${config?.last_sync_datetime}"`);
+    console.info(`  - 总页面数: ${notionPagePropList.length}`);
+    
+    // 全量同步：只过滤已发布的页面
+    const beforeFilter = notionPagePropList.length;
+    notionPagePropList = notionPagePropList.filter((prop) => prop[config.status.name] == config.status.published);
+    const afterFilter = notionPagePropList.length;
+    console.info(`🎯 全量同步结果: ${beforeFilter} → ${afterFilter} 个已发布页面需要处理`);
   }
   // deal with notionPagePropList
   if (notionPagePropList.length == 0) {
