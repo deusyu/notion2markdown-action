@@ -1,6 +1,6 @@
 {
   "name": "notion2markdown-action",
-  "version": "1.1.12",
+  "version": "1.1.13",
   "description": "将 Notion 数据库中的页面转换为 Markdown 文档，支持 Hexo、Hugo 等静态博客构建，内置 PicGo-Core 图床上传功能",
   "main": "index.js",
   "scripts": {
