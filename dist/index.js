@@ -351530,12 +351530,44 @@ async function sync() {
   /**
    * 处理需要更新的文章
    */
-  if (config?.last_sync_datetime && config.last_sync_datetime !== null) {
+  if (config?.last_sync_datetime && config.last_sync_datetime !== null && config.last_sync_datetime.trim() !== '') {
     if (!moment(config?.last_sync_datetime).isValid()) {
       console.error(`The last_sync_datetime ${config.last_sync_datetime} isn't valid.`);
     }
     console.info(`Only sync the pages on or after ${config.last_sync_datetime}`);
-    notionPagePropList = notionPagePropList.filter((prop) => prop[config.status.name] == config.status.published && moment(prop.last_edited_time) > moment(config.last_sync_datetime));
+    
+    // 🔍 增加详细的调试信息
+    const lastSyncMoment = moment(config.last_sync_datetime);
+    console.info(`🔍 增量同步调试信息:`);
+    console.info(`  - 配置的同步时间: ${config.last_sync_datetime}`);
+    console.info(`  - 解析后的时间: ${lastSyncMoment.toISOString()}`);
+    console.info(`  - 总页面数: ${notionPagePropList.length}`);
+    
+    // 过滤页面前，先统计一下
+    const beforeFilter = notionPagePropList.length;
+    
+    notionPagePropList = notionPagePropList.filter((prop) => {
+      const isPublished = prop[config.status.name] == config.status.published;
+      const pageEditTime = moment(prop.last_edited_time);
+      const isNewer = pageEditTime > lastSyncMoment;
+      
+      console.info(`  - 页面 "${prop.title}": 发布=${isPublished}, 编辑时间=${pageEditTime.toISOString()}, 需要同步=${isNewer}`);
+      
+      return isPublished && isNewer;
+    });
+    
+    const afterFilter = notionPagePropList.length;
+    console.info(`🎯 增量同步结果: ${beforeFilter} → ${afterFilter} 个页面需要处理`);
+  } else {
+    console.info(`🔄 执行全量同步 (无有效的last_sync_datetime)`);
+    console.info(`  - last_sync_datetime值: "${config?.last_sync_datetime}"`);
+    console.info(`  - 总页面数: ${notionPagePropList.length}`);
+    
+    // 全量同步：只过滤已发布的页面
+    const beforeFilter = notionPagePropList.length;
+    notionPagePropList = notionPagePropList.filter((prop) => prop[config.status.name] == config.status.published);
+    const afterFilter = notionPagePropList.length;
+    console.info(`🎯 全量同步结果: ${beforeFilter} → ${afterFilter} 个已发布页面需要处理`);
   }
   // deal with notionPagePropList
   if (notionPagePropList.length == 0) {
@@ -382736,7 +382768,7 @@ module.exports = /*#__PURE__*/JSON.parse('["UTF-8","IBM866","ISO-8859-2","ISO-88
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"name":"notion2markdown-action","version":"1.1.10","description":"将 Notion 数据库中的页面转换为 Markdown 文档，支持 Hexo、Hugo 等静态博客构建，内置 PicGo-Core 图床上传功能","main":"index.js","scripts":{"test":"node test/test.js","test:video":"node test/video-only.test.js","test:local":"node test/local.test.js","test:incremental":"node test/incremental.test.js","test:config":"node test/config-validator.js","build":"ncc build src/index.js -o dist/"},"author":"deusyu <daniel@deusyu.app>","contributors":["Dorad <https://github.com/Doradx> (Original author)","mohuishou <1@lailin.xyz>"],"license":"MIT","repository":{"type":"git","url":"https://github.com/deusyu/notion2markdown-action.git"},"homepage":"https://github.com/deusyu/notion2markdown-action","bugs":{"url":"https://github.com/deusyu/notion2markdown-action/issues"},"engines":{"node":">=16.0.0"},"keywords":["notion","markdown","hexo","hugo","blog","github-actions","picgo"],"dependencies":{"@actions/core":"^1.10.0","@actions/exec":"^1.1.0","@actions/github":"^5.1.1","@notionhq/client":"^0.4.9","@types/node":"^16.11.12","adm-zip":"^0.5.9","axios":"^0.24.0","cheerio":"^1.0.0-rc.12","dayjs":"^1.10.7","glob":"^7.2.0","image-size":"^1.0.2","imagemin":"^7.0.1","imagemin-gifsicle":"^7.0.0","imagemin-mozjpeg":"^9.0.0","imagemin-pngquant":"^9.0.2","imagemin-svgo":"^9.0.0","install":"^0.13.0","md5-file":"^5.0.0","moment-timezone":"^0.5.43","notion-to-md":"^3.1.1","npm":"^9.6.4","p-queue":"^7.3.4","picgo":"^1.5.6","prettier":"^2.7.1","proxy-agent":"^5.0.0","twemoji":"^13.1.0","yaml":"^2.0.0-9"}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"notion2markdown-action","version":"1.1.11","description":"将 Notion 数据库中的页面转换为 Markdown 文档，支持 Hexo、Hugo 等静态博客构建，内置 PicGo-Core 图床上传功能","main":"index.js","scripts":{"test":"node test/test.js","test:video":"node test/video-only.test.js","test:local":"node test/local.test.js","test:incremental":"node test/incremental.test.js","test:config":"node test/config-validator.js","build":"ncc build src/index.js -o dist/"},"author":"deusyu <daniel@deusyu.app>","contributors":["Dorad <https://github.com/Doradx> (Original author)","mohuishou <1@lailin.xyz>"],"license":"MIT","repository":{"type":"git","url":"https://github.com/deusyu/notion2markdown-action.git"},"homepage":"https://github.com/deusyu/notion2markdown-action","bugs":{"url":"https://github.com/deusyu/notion2markdown-action/issues"},"engines":{"node":">=16.0.0"},"keywords":["notion","markdown","hexo","hugo","blog","github-actions","picgo"],"dependencies":{"@actions/core":"^1.10.0","@actions/exec":"^1.1.0","@actions/github":"^5.1.1","@notionhq/client":"^0.4.9","@types/node":"^16.11.12","adm-zip":"^0.5.9","axios":"^0.24.0","cheerio":"^1.0.0-rc.12","dayjs":"^1.10.7","glob":"^7.2.0","image-size":"^1.0.2","imagemin":"^7.0.1","imagemin-gifsicle":"^7.0.0","imagemin-mozjpeg":"^9.0.0","imagemin-pngquant":"^9.0.2","imagemin-svgo":"^9.0.0","install":"^0.13.0","md5-file":"^5.0.0","moment-timezone":"^0.5.43","notion-to-md":"^3.1.1","npm":"^9.6.4","p-queue":"^7.3.4","picgo":"^1.5.6","prettier":"^2.7.1","proxy-agent":"^5.0.0","twemoji":"^13.1.0","yaml":"^2.0.0-9"}}');
 
 /***/ })
 
