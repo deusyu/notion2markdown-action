@@ -136,6 +136,11 @@ async function sync() {
         properties.filename = filename;
     }
     properties.output_dir = path.dirname(properties.filePath);
+    
+    // 🔧 添加页面级别的时间字段用于增量同步
+    properties.last_edited_time = page.last_edited_time;
+    properties.created_time = page.created_time;
+    
     return properties;
   }));
   console.debug(`${notionPagePropList.length} pages found in notion.`);
