@@ -22,6 +22,7 @@ const { migrateNotionImageFromURL } = require("./migrateNotionImage")
 const { format } = require("prettier");
 const moment = require('moment-timezone');
 const t = require('./customTransformer');
+const packageJson = require("../package.json");
 
 let config = {
   notion_secret: "",
@@ -268,7 +269,7 @@ async function page2Markdown(page, filePath, properties) {
   // 在转换开始前输出版本信息，确保使用的是正确版本
   console.error(`[MERMAID-DEBUG] 🚀 开始转换页面: ${page.id}`);
   console.error(`[MERMAID-DEBUG] 📅 当前时间: ${new Date().toISOString()}`);
-      console.error(`[MERMAID-DEBUG] 🔧 版本信息: v1.1.9`);
+      console.error(`[MERMAID-DEBUG] 🔧 版本信息: v${packageJson.version}`);
   
   const mdblocks = await n2m.pageToMarkdown(page.id);
   console.error(`[MERMAID-DEBUG] 📊 获取到 ${mdblocks.length} 个块`);
