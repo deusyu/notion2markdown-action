@@ -187044,7 +187044,7 @@ module.exports = new BinWrapper()
 	.src(`${url}macos/cjpeg`, 'darwin')
 	.src(`${url}linux/cjpeg`, 'linux')
 	.src(`${url}win/cjpeg.exe`, 'win32')
-	.dest(__nccwpck_require__.ab + "vendor1")
+	.dest(__nccwpck_require__.ab + "vendor2")
 	.use(process.platform === 'win32' ? 'cjpeg.exe' : 'cjpeg');
 
 
@@ -201169,7 +201169,7 @@ module.exports = new BinWrapper()
 	.src(`${url}linux/x64/pngquant`, 'linux', 'x64')
 	.src(`${url}freebsd/x64/pngquant`, 'freebsd', 'x64')
 	.src(`${url}win/pngquant.exe`, 'win32')
-	.dest(__nccwpck_require__.ab + "vendor2")
+	.dest(__nccwpck_require__.ab + "vendor1")
 	.use(process.platform === 'win32' ? 'pngquant.exe' : 'pngquant');
 
 
@@ -351351,6 +351351,7 @@ const { migrateNotionImageFromURL } = __nccwpck_require__(27037)
 const { format } = __nccwpck_require__(7680);
 const moment = __nccwpck_require__(38125);
 const t = __nccwpck_require__(63060);
+const packageJson = __nccwpck_require__(8330);
 
 let config = {
   notion_secret: "",
@@ -351597,7 +351598,7 @@ async function page2Markdown(page, filePath, properties) {
   // 在转换开始前输出版本信息，确保使用的是正确版本
   console.error(`[MERMAID-DEBUG] 🚀 开始转换页面: ${page.id}`);
   console.error(`[MERMAID-DEBUG] 📅 当前时间: ${new Date().toISOString()}`);
-      console.error(`[MERMAID-DEBUG] 🔧 版本信息: v1.1.9`);
+      console.error(`[MERMAID-DEBUG] 🔧 版本信息: v${packageJson.version}`);
   
   const mdblocks = await n2m.pageToMarkdown(page.id);
   console.error(`[MERMAID-DEBUG] 📊 获取到 ${mdblocks.length} 个块`);
@@ -351807,12 +351808,12 @@ async function getPropertiesDict(page) {
   }
   
   // 如果没有updated字段，添加系统last_edited_time
+  // 🔧 使用固定UTC格式，避免每次格式化产生差异，确保增量同步正常工作
   if (!data['updated']) {
     const mt = moment(page.last_edited_time);
     if (mt.isValid()) {
-      data['updated'] = config?.timezone ? 
-        mt.tz(config.timezone).format('YYYY-MM-DD HH:mm:ss') : 
-        mt.format();
+      // 使用固定的UTC时间格式，避免时区配置变化导致的文件重复生成
+      data['updated'] = mt.utc().format('YYYY-MM-DD HH:mm:ss');
     }
   }
   
@@ -351999,14 +352000,16 @@ function getPropVal(data) {
     case "date":
       var mt = moment(val.start);
       if (!mt.isValid()) return val.start;
-      return config?.timezone ? mt.tz(config.timezone).format('YYYY-MM-DD HH:mm:ss') : mt.format();
+      // 🔧 使用固定UTC格式，避免时区配置差异导致重复生成
+      return mt.utc().format('YYYY-MM-DD HH:mm:ss');
     case "formula":
       // 🆕 处理公式字段
       if (val.type === "date" && val.date) {
         // 处理返回日期的公式
         var mt = moment(val.date.start);
         if (!mt.isValid()) return val.date.start;
-        return config?.timezone ? mt.tz(config.timezone).format('YYYY-MM-DD HH:mm:ss') : mt.format();
+        // 🔧 使用固定UTC格式，避免时区配置差异导致重复生成
+        return mt.utc().format('YYYY-MM-DD HH:mm:ss');
       } else if (val.type === "string") {
         return val.string;
       } else if (val.type === "number") {
@@ -352027,7 +352030,8 @@ function getPropVal(data) {
     case "last_edited_time":
       var mt = moment(val);
       if (!mt.isValid()) return val;
-      return config?.timezone ? mt.tz(config.timezone).format('YYYY-MM-DD HH:mm:ss') : mt.format();
+      // 🔧 使用固定UTC格式，避免时区配置差异导致重复生成
+      return mt.utc().format('YYYY-MM-DD HH:mm:ss');
     default:
       return "";
   }
@@ -382726,6 +382730,14 @@ module.exports = /*#__PURE__*/JSON.parse('{"866":"IBM866","unicode-1-1-utf-8":"U
 "use strict";
 module.exports = /*#__PURE__*/JSON.parse('["UTF-8","IBM866","ISO-8859-2","ISO-8859-3","ISO-8859-4","ISO-8859-5","ISO-8859-6","ISO-8859-7","ISO-8859-8","ISO-8859-10","ISO-8859-13","ISO-8859-14","ISO-8859-15","ISO-8859-16","KOI8-R","KOI8-U","macintosh","windows-874","windows-1250","windows-1251","windows-1252","windows-1253","windows-1254","windows-1255","windows-1256","windows-1257","windows-1258","GBK","gb18030","Big5","EUC-JP","Shift_JIS","EUC-KR","UTF-16BE","UTF-16LE","x-user-defined"]');
 
+/***/ }),
+
+/***/ 8330:
+/***/ ((module) => {
+
+"use strict";
+module.exports = /*#__PURE__*/JSON.parse('{"name":"notion2markdown-action","version":"1.1.10","description":"将 Notion 数据库中的页面转换为 Markdown 文档，支持 Hexo、Hugo 等静态博客构建，内置 PicGo-Core 图床上传功能","main":"index.js","scripts":{"test":"node test/test.js","test:video":"node test/video-only.test.js","test:local":"node test/local.test.js","test:incremental":"node test/incremental.test.js","test:config":"node test/config-validator.js","build":"ncc build src/index.js -o dist/"},"author":"deusyu <daniel@deusyu.app>","contributors":["Dorad <https://github.com/Doradx> (Original author)","mohuishou <1@lailin.xyz>"],"license":"MIT","repository":{"type":"git","url":"https://github.com/deusyu/notion2markdown-action.git"},"homepage":"https://github.com/deusyu/notion2markdown-action","bugs":{"url":"https://github.com/deusyu/notion2markdown-action/issues"},"engines":{"node":">=16.0.0"},"keywords":["notion","markdown","hexo","hugo","blog","github-actions","picgo"],"dependencies":{"@actions/core":"^1.10.0","@actions/exec":"^1.1.0","@actions/github":"^5.1.1","@notionhq/client":"^0.4.9","@types/node":"^16.11.12","adm-zip":"^0.5.9","axios":"^0.24.0","cheerio":"^1.0.0-rc.12","dayjs":"^1.10.7","glob":"^7.2.0","image-size":"^1.0.2","imagemin":"^7.0.1","imagemin-gifsicle":"^7.0.0","imagemin-mozjpeg":"^9.0.0","imagemin-pngquant":"^9.0.2","imagemin-svgo":"^9.0.0","install":"^0.13.0","md5-file":"^5.0.0","moment-timezone":"^0.5.43","notion-to-md":"^3.1.1","npm":"^9.6.4","p-queue":"^7.3.4","picgo":"^1.5.6","prettier":"^2.7.1","proxy-agent":"^5.0.0","twemoji":"^13.1.0","yaml":"^2.0.0-9"}}');
+
 /***/ })
 
 /******/ 	});
@@ -382797,6 +382809,7 @@ var __webpack_exports__ = {};
  */
 const notion = __nccwpck_require__(56233);
 const core = __nccwpck_require__(72831);
+const packageJson = __nccwpck_require__(8330);
 
 function isJson(str) {
   try {
@@ -382868,7 +382881,7 @@ try {
 
 (async function () {
   // 强制输出版本信息到所有可能的流
-  const versionMsg = `[MERMAID-DEBUG] 🚀 Action版本: v1.1.9 时间戳: ${new Date().toISOString()}`;
+  const versionMsg = `[MERMAID-DEBUG] 🚀 Action版本: v${packageJson.version} 时间戳: ${new Date().toISOString()}`;
   console.log(versionMsg);
   console.error(versionMsg);
   process.stdout.write(versionMsg + '\n');
