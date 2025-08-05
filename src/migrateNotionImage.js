@@ -51,7 +51,16 @@ async function migrateNotionImageFromURL(ctx, url) {
   // 检查URL对应的图片是否已经存在
   const base_url = ctx.getConfig('pic-base-url') || null;
   const uuidreg = /[a-fA-F0-9]{8}-(?:[a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}/g;
-  const uuid = url.match(uuidreg)?.pop();
+  // 🔧 修复：从Notion API URL路径中提取图片ID（第二个UUID）
+  // URL格式：/spaceId/imageId/filename，所以取第二个UUID作为图片ID
+  const uuids = url.match(uuidreg);
+  let uuid = uuids && uuids.length >= 2 ? uuids[1] : uuids?.[0];
+  
+  // 🔧 Fallback: 如果没有UUID，使用URL的MD5作为唯一标识符
+  if (!uuid) {
+    const crypto = require('crypto');
+    uuid = crypto.createHash('md5').update(url).digest('hex');
+  }
   let ext = url.split('?')[0].split('.').pop()?.toLowerCase();
   ext = ext == 'jpeg' ? 'jpg' : ext; // replace jpeg with jpg
   ext = ext == 'tiff' ? 'tif' : ext; // replace tiff with tif

@@ -60,7 +60,10 @@ function init(cfg) {
 
   if (!config?.pic_base_url && config.picBed?.uploader) {
     const bed = config.picBed[config.picBed?.uploader]
-    if (bed?.customUrl && bed?.path) {
+    // 🔧 修复：AWS S3使用urlPrefix作为base URL，不需要path
+    if (bed?.urlPrefix) {
+      config.pic_base_url = bed.urlPrefix;
+    } else if (bed?.customUrl && bed?.path) {
       config.pic_base_url = new URL(bed.path, bed.customUrl).href;
     }
   }
