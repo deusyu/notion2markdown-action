@@ -478,12 +478,12 @@ async function getPropertiesDict(page) {
   }
   
   // 如果没有updated字段，添加系统last_edited_time
+  // 🔧 使用固定UTC格式，避免每次格式化产生差异，确保增量同步正常工作
   if (!data['updated']) {
     const mt = moment(page.last_edited_time);
     if (mt.isValid()) {
-      data['updated'] = config?.timezone ? 
-        mt.tz(config.timezone).format('YYYY-MM-DD HH:mm:ss') : 
-        mt.format();
+      // 使用固定的UTC时间格式，避免时区配置变化导致的文件重复生成
+      data['updated'] = mt.utc().format('YYYY-MM-DD HH:mm:ss');
     }
   }
   
@@ -670,14 +670,16 @@ function getPropVal(data) {
     case "date":
       var mt = moment(val.start);
       if (!mt.isValid()) return val.start;
-      return config?.timezone ? mt.tz(config.timezone).format('YYYY-MM-DD HH:mm:ss') : mt.format();
+      // 🔧 使用固定UTC格式，避免时区配置差异导致重复生成
+      return mt.utc().format('YYYY-MM-DD HH:mm:ss');
     case "formula":
       // 🆕 处理公式字段
       if (val.type === "date" && val.date) {
         // 处理返回日期的公式
         var mt = moment(val.date.start);
         if (!mt.isValid()) return val.date.start;
-        return config?.timezone ? mt.tz(config.timezone).format('YYYY-MM-DD HH:mm:ss') : mt.format();
+        // 🔧 使用固定UTC格式，避免时区配置差异导致重复生成
+        return mt.utc().format('YYYY-MM-DD HH:mm:ss');
       } else if (val.type === "string") {
         return val.string;
       } else if (val.type === "number") {
@@ -698,7 +700,8 @@ function getPropVal(data) {
     case "last_edited_time":
       var mt = moment(val);
       if (!mt.isValid()) return val;
-      return config?.timezone ? mt.tz(config.timezone).format('YYYY-MM-DD HH:mm:ss') : mt.format();
+      // 🔧 使用固定UTC格式，避免时区配置差异导致重复生成
+      return mt.utc().format('YYYY-MM-DD HH:mm:ss');
     default:
       return "";
   }
