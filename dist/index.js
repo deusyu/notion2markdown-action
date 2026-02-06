@@ -187044,7 +187044,7 @@ module.exports = new BinWrapper()
 	.src(`${url}macos/cjpeg`, 'darwin')
 	.src(`${url}linux/cjpeg`, 'linux')
 	.src(`${url}win/cjpeg.exe`, 'win32')
-	.dest(__nccwpck_require__.ab + "vendor2")
+	.dest(__nccwpck_require__.ab + "vendor1")
 	.use(process.platform === 'win32' ? 'cjpeg.exe' : 'cjpeg');
 
 
@@ -201169,7 +201169,7 @@ module.exports = new BinWrapper()
 	.src(`${url}linux/x64/pngquant`, 'linux', 'x64')
 	.src(`${url}freebsd/x64/pngquant`, 'freebsd', 'x64')
 	.src(`${url}win/pngquant.exe`, 'win32')
-	.dest(__nccwpck_require__.ab + "vendor1")
+	.dest(__nccwpck_require__.ab + "vendor2")
 	.use(process.platform === 'win32' ? 'pngquant.exe' : 'pngquant');
 
 
@@ -351496,6 +351496,10 @@ async function sync() {
    * 1. 删除本地存在，但是Notion中不是已发布状态的文章
    * 2. 更新notion中已发布的文章的abbrlink
    *  */
+  // 安全检查：如果API返回0个已发布页面，跳过删除逻辑，防止误删
+  if (pages.length === 0) {
+    console.warn('⚠️ Notion API returned 0 published pages, skipping clean_unpublished_post to prevent accidental deletion.');
+  }
   // load page properties from the markdown file
   const localPostFileList = readdirSync(config.output_dir.post);
   var deletedPostList = [];
@@ -351515,7 +351519,7 @@ async function sync() {
       return prop.id == localProp.id
     }) || null;
     // const filename = path.parse(localFilename).name;
-    if (config.output_dir?.clean_unpublished_post && (!page || !notionProp || localFilename !== notionProp?.filename)){
+    if (pages.length > 0 && config.output_dir?.clean_unpublished_post && (!page || !notionProp || localFilename !== notionProp?.filename)){
       console.debug(`Page is not exists, delete the local file: ${localFilename}`);
       unlinkSync(path.join(config.output_dir.post, localFilename));
       deletedPostList.push(localFilename);
@@ -351752,25 +351756,30 @@ async function page2Markdown(page, filePath, properties) {
  * @returns 
  */
 async function getPages(database_id) {
-  let filter = {}
-  filter = {
+  let filter = {
     property: config.status.name,
     select: {
       equals: config.status.published,
     },
-  }
-  // console.debug('Page filter:', filter);
-  let resp = await notion.databases.query({
-    database_id: database_id,
-    filter: filter,
-    sorts: [
-      {
-        timestamp: 'last_edited_time',
-        direction: 'ascending'
-      }
-    ]
-  });
-  return resp.results;
+  };
+  let allResults = [];
+  let cursor = undefined;
+  do {
+    let resp = await notion.databases.query({
+      database_id: database_id,
+      filter: filter,
+      sorts: [
+        {
+          timestamp: 'last_edited_time',
+          direction: 'ascending'
+        }
+      ],
+      start_cursor: cursor,
+    });
+    allResults = allResults.concat(resp.results);
+    cursor = resp.has_more ? resp.next_cursor : undefined;
+  } while (cursor);
+  return allResults;
 }
 
 /**
@@ -382785,7 +382794,7 @@ module.exports = /*#__PURE__*/JSON.parse('["UTF-8","IBM866","ISO-8859-2","ISO-88
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"name":"notion2markdown-action","version":"1.1.13","description":"将 Notion 数据库中的页面转换为 Markdown 文档，支持 Hexo、Hugo 等静态博客构建，内置 PicGo-Core 图床上传功能","main":"index.js","scripts":{"test":"node test/test.js","test:video":"node test/video-only.test.js","test:local":"node test/local.test.js","test:incremental":"node test/incremental.test.js","test:config":"node test/config-validator.js","build":"ncc build src/index.js -o dist/"},"author":"deusyu <daniel@deusyu.app>","contributors":["Dorad <https://github.com/Doradx> (Original author)","mohuishou <1@lailin.xyz>"],"license":"MIT","repository":{"type":"git","url":"https://github.com/deusyu/notion2markdown-action.git"},"homepage":"https://github.com/deusyu/notion2markdown-action","bugs":{"url":"https://github.com/deusyu/notion2markdown-action/issues"},"engines":{"node":">=16.0.0"},"keywords":["notion","markdown","hexo","hugo","blog","github-actions","picgo"],"dependencies":{"@actions/core":"^1.10.0","@actions/exec":"^1.1.0","@actions/github":"^5.1.1","@notionhq/client":"^0.4.9","@types/node":"^16.11.12","adm-zip":"^0.5.9","axios":"^0.24.0","cheerio":"^1.0.0-rc.12","dayjs":"^1.10.7","glob":"^7.2.0","image-size":"^1.0.2","imagemin":"^7.0.1","imagemin-gifsicle":"^7.0.0","imagemin-mozjpeg":"^9.0.0","imagemin-pngquant":"^9.0.2","imagemin-svgo":"^9.0.0","install":"^0.13.0","md5-file":"^5.0.0","moment-timezone":"^0.5.43","notion-to-md":"^3.1.1","npm":"^9.6.4","p-queue":"^7.3.4","picgo":"^1.5.6","prettier":"^2.7.1","proxy-agent":"^5.0.0","twemoji":"^13.1.0","yaml":"^2.0.0-9"}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"notion2markdown-action","version":"1.1.14","description":"将 Notion 数据库中的页面转换为 Markdown 文档，支持 Hexo、Hugo 等静态博客构建，内置 PicGo-Core 图床上传功能","main":"index.js","scripts":{"test":"node test/test.js","test:video":"node test/video-only.test.js","test:local":"node test/local.test.js","test:incremental":"node test/incremental.test.js","test:config":"node test/config-validator.js","build":"ncc build src/index.js -o dist/"},"author":"deusyu <daniel@deusyu.app>","contributors":["Dorad <https://github.com/Doradx> (Original author)","mohuishou <1@lailin.xyz>"],"license":"MIT","repository":{"type":"git","url":"https://github.com/deusyu/notion2markdown-action.git"},"homepage":"https://github.com/deusyu/notion2markdown-action","bugs":{"url":"https://github.com/deusyu/notion2markdown-action/issues"},"engines":{"node":">=16.0.0"},"keywords":["notion","markdown","hexo","hugo","blog","github-actions","picgo"],"dependencies":{"@actions/core":"^1.10.0","@actions/exec":"^1.1.0","@actions/github":"^5.1.1","@notionhq/client":"^0.4.9","@types/node":"^16.11.12","adm-zip":"^0.5.9","axios":"^0.24.0","cheerio":"^1.0.0-rc.12","dayjs":"^1.10.7","glob":"^7.2.0","image-size":"^1.0.2","imagemin":"^7.0.1","imagemin-gifsicle":"^7.0.0","imagemin-mozjpeg":"^9.0.0","imagemin-pngquant":"^9.0.2","imagemin-svgo":"^9.0.0","install":"^0.13.0","md5-file":"^5.0.0","moment-timezone":"^0.5.43","notion-to-md":"^3.1.1","npm":"^9.6.4","p-queue":"^7.3.4","picgo":"^1.5.6","prettier":"^2.7.1","proxy-agent":"^5.0.0","twemoji":"^13.1.0","yaml":"^2.0.0-9"}}');
 
 /***/ })
 
