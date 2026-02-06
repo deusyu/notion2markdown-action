@@ -158,6 +158,10 @@ async function sync() {
    * 1. 删除本地存在，但是Notion中不是已发布状态的文章
    * 2. 更新notion中已发布的文章的abbrlink
    *  */
+  // 安全检查：如果API返回0个已发布页面，跳过删除逻辑，防止误删
+  if (pages.length === 0) {
+    console.warn('⚠️ Notion API returned 0 published pages, skipping clean_unpublished_post to prevent accidental deletion.');
+  }
   // load page properties from the markdown file
   const localPostFileList = readdirSync(config.output_dir.post);
   var deletedPostList = [];
@@ -177,7 +181,7 @@ async function sync() {
       return prop.id == localProp.id
     }) || null;
     // const filename = path.parse(localFilename).name;
-    if (config.output_dir?.clean_unpublished_post && (!page || !notionProp || localFilename !== notionProp?.filename)){
+    if (pages.length > 0 && config.output_dir?.clean_unpublished_post && (!page || !notionProp || localFilename !== notionProp?.filename)){
       console.debug(`Page is not exists, delete the local file: ${localFilename}`);
       unlinkSync(path.join(config.output_dir.post, localFilename));
       deletedPostList.push(localFilename);
@@ -414,25 +418,30 @@ async function page2Markdown(page, filePath, properties) {
  * @returns 
  */
 async function getPages(database_id) {
-  let filter = {}
-  filter = {
+  let filter = {
     property: config.status.name,
     select: {
       equals: config.status.published,
     },
-  }
-  // console.debug('Page filter:', filter);
-  let resp = await notion.databases.query({
-    database_id: database_id,
-    filter: filter,
-    sorts: [
-      {
-        timestamp: 'last_edited_time',
-        direction: 'ascending'
-      }
-    ]
-  });
-  return resp.results;
+  };
+  let allResults = [];
+  let cursor = undefined;
+  do {
+    let resp = await notion.databases.query({
+      database_id: database_id,
+      filter: filter,
+      sorts: [
+        {
+          timestamp: 'last_edited_time',
+          direction: 'ascending'
+        }
+      ],
+      start_cursor: cursor,
+    });
+    allResults = allResults.concat(resp.results);
+    cursor = resp.has_more ? resp.next_cursor : undefined;
+  } while (cursor);
+  return allResults;
 }
 
 /**
